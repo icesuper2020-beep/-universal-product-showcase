@@ -284,7 +284,13 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
           object={model}
           position={modelFit.offset.toArray()}
           onPointerMove={(event) => focusDisplay(event.intersections.some((intersection) => intersection.object === screenNode))}
-          onPointerLeave={() => focusDisplay(false)}
+          onPointerLeave={() => {
+            focusDisplay(false)
+            dragging.current = false
+            dragState.current.active = false
+            heroYaw.current = HERO_YAW
+            inspectionYaw.current = FRONT_YAW
+          }}
           onPointerDown={(event) => {
             const isDisplay = event.object === screenNode
             if (isDisplay) return

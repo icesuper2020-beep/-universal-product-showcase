@@ -6,6 +6,8 @@ import * as THREE from 'three'
 const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
 const BRAND_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 const CLOSED_HINGE = Math.PI - .018
+const FRONT_YAW = -Math.PI / 2
+const ARRIVAL_YAW = FRONT_YAW - .72
 
 function buildScreenTexture() {
   const canvas = document.createElement('canvas')
@@ -47,7 +49,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const revealLight = useRef()
   const screenMaterial = useRef()
   const introTime = useRef(0)
-  const target = useRef({ x: -.32, y: -.95 })
+  const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
   const screenTexture = useMemo(buildScreenTexture, [])
   // GLTFLoader sanitizes spaces in node names to underscores.
@@ -105,9 +107,9 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 2.35)
     const opening = THREE.MathUtils.smoothstep(introTime.current, 2.45, 4)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    const interactiveY = displayFocused ? 0 : (deadZone ? 0 : pointer.current.x * Math.PI)
+    const interactiveY = displayFocused ? FRONT_YAW : (deadZone ? FRONT_YAW : FRONT_YAW + pointer.current.x * Math.PI)
     const interactiveX = deadZone ? -.08 : -.08 - pointer.current.y * .16
-    target.current.y = THREE.MathUtils.lerp(-.95, interactiveY, arrival)
+    target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
@@ -133,7 +135,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
   return (
     <Float speed={.55} rotationIntensity={.018} floatIntensity={.08}>
-      <group ref={product} position={[1.45, 2.15, -8]} rotation={[-.32, -.95, .16]} scale={modelFit.scale * .035}>
+      <group ref={product} position={[1.45, 2.15, -8]} rotation={[-.32, ARRIVAL_YAW, .16]} scale={modelFit.scale * .035}>
         <pointLight ref={revealLight} position={[0, 1.2, 1.4]} intensity={0} color="#4f78ff" distance={5} decay={2} />
         <primitive
           object={model}

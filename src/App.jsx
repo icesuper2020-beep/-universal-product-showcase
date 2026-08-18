@@ -91,7 +91,7 @@ export default function App() {
         </div>
         <motion.div className="product-stage" initial={{ opacity: 0 }} animate={ready ? { opacity: 1 } : {}} transition={{ duration: .35 }}>
           {webGLAvailable.current
-            ? <AeronScene pointer={pointer} dragging={dragging} onDisplayFocus={setDisplayFocused} onOpen={() => setDisplayOpen(true)} />
+            ? ready && <AeronScene pointer={pointer} dragging={dragging} onDisplayFocus={setDisplayFocused} onOpen={() => setDisplayOpen(true)} />
             : <ProductFallback />}
           <div className="interaction-hint"><span /> {displayFocused ? 'DISPLAY STABILIZED' : 'MOVE TO EXPLORE'}</div>
         </motion.div>

@@ -4,6 +4,31 @@ import { useEffect, useRef, useState } from 'react'
 import AeronScene from './components/AeronScene'
 import LoadingExperience from './components/LoadingExperience'
 
+function supportsWebGL() {
+  try {
+    const canvas = document.createElement('canvas')
+    return Boolean(canvas.getContext('webgl2') || canvas.getContext('webgl'))
+  } catch {
+    return false
+  }
+}
+
+function ProductFallback() {
+  return (
+    <div className="fallback-product" aria-label="Interactive Aeron One laptop preview">
+      <div className="fallback-lid">
+        <div className="fallback-screen"><span>BEYOND THIN.</span><small>ENGINEERED FOR POSSIBILITY</small></div>
+        <i className="fallback-camera" />
+      </div>
+      <div className="fallback-base">
+        <div className="fallback-keyboard">{Array.from({ length: 54 }, (_, index) => <i key={index} />)}</div>
+        <div className="fallback-trackpad" />
+      </div>
+      <div className="fallback-shadow" />
+    </div>
+  )
+}
+
 export default function App() {
   const [progress, setProgress] = useState(0)
   const [ready, setReady] = useState(false)
@@ -11,6 +36,7 @@ export default function App() {
   const [displayFocused, setDisplayFocused] = useState(false)
   const pointer = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
+  const webGLAvailable = useRef(supportsWebGL())
 
   useEffect(() => {
     const started = performance.now()
@@ -32,6 +58,8 @@ export default function App() {
     const bounds = event.currentTarget.getBoundingClientRect()
     pointer.current.x = ((event.clientX - bounds.left) / bounds.width) * 2 - 1
     pointer.current.y = -(((event.clientY - bounds.top) / bounds.height) * 2 - 1)
+    event.currentTarget.style.setProperty('--pointer-x', `${pointer.current.x * 7}deg`)
+    event.currentTarget.style.setProperty('--pointer-y', `${pointer.current.y * -3}deg`)
   }
 
   return (
@@ -61,7 +89,9 @@ export default function App() {
           </motion.div>
         </div>
         <motion.div className="product-stage" initial={{ opacity: 0, scale: 0.86, x: 80 }} animate={ready ? { opacity: 1, scale: 1, x: 0 } : {}} transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }}>
-          <AeronScene pointer={pointer} dragging={dragging} onDisplayFocus={setDisplayFocused} />
+          {webGLAvailable.current
+            ? <AeronScene pointer={pointer} dragging={dragging} onDisplayFocus={setDisplayFocused} />
+            : <ProductFallback />}
           <div className="interaction-hint"><span /> {displayFocused ? 'DISPLAY STABILIZED' : 'MOVE TO EXPLORE'}</div>
         </motion.div>
         <div className="hero-index">01 <span>/</span> 05</div>

@@ -6,6 +6,8 @@ import * as THREE from 'three'
 const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
 const BRAND_OBJECT_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 const BRAND_MATERIAL_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo/i
+const CHASSIS_PATTERN = /(^|\s)(mold(?:\s|_|\.|$)|deck2?(?:\s|_|\.|$)|laptop[ _]display|display[ _]sqr)/i
+const CHASSIS_EXCLUDE_PATTERN = /wallpaper|keys?|wasd|backlight|keylight|led|power|logo|pendrive|screen/i
 const CLOSED_HINGE = Math.PI - .018
 const FRONT_YAW = -Math.PI / 2
 const HERO_YAW = FRONT_YAW - .3
@@ -207,18 +209,52 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
 
   useEffect(() => {
     const finish = {
-      midnight: new THREE.Color('#111827'),
-      titanium: new THREE.Color('#747a83'),
-      silver: new THREE.Color('#c2c7cd'),
-    }[productColor] || new THREE.Color('#111827')
+      midnight: { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveMap: true },
+      titanium: { color: '#77736d', metalness: .84, roughness: .2, env: 2.05, preserveMap: false },
+      silver: { color: '#c8c6c1', metalness: .88, roughness: .17, env: 2.25, preserveMap: false },
+    }[productColor] || { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveMap: true }
+    const finishColor = new THREE.Color(finish.color)
     model.traverse((object) => {
       if (!object.isMesh || object.name === 'wallpaper') return
+      const hierarchy = []
+      let node = object
+      while (node && node !== model) {
+        hierarchy.push(node.name || '')
+        node = node.parent
+      }
       const materials = Array.isArray(object.material) ? object.material : [object.material]
+      const materialNames = materials.filter(Boolean).map((material) => material.name || '').join(' ')
+      const surfaceName = `${hierarchy.join(' ')} ${materialNames}`
+      const isChassis = CHASSIS_PATTERN.test(surfaceName) && !CHASSIS_EXCLUDE_PATTERN.test(surfaceName)
       materials.filter(Boolean).forEach((material) => {
         if (!material.color || BRAND_MATERIAL_PATTERN.test(material.name)) return
-        if (!material.userData.aeronBaseColor) material.userData.aeronBaseColor = material.color.clone()
-        const strength = productColor === 'midnight' ? .28 : .56
-        material.color.copy(material.userData.aeronBaseColor).lerp(finish, strength)
+        if (!material.userData.aeronFinishBase) {
+          material.userData.aeronFinishBase = {
+            color: material.color.clone(),
+            map: material.map || null,
+            metalness: material.metalness,
+            roughness: material.roughness,
+            envMapIntensity: material.envMapIntensity,
+          }
+        }
+        const base = material.userData.aeronFinishBase
+        if (!isChassis) {
+          // Never wash out the keyboard legends, ports, LEDs or screen details.
+          material.color.copy(base.color)
+          material.map = base.map
+          if (base.metalness !== undefined) material.metalness = base.metalness
+          if (base.roughness !== undefined) material.roughness = base.roughness
+          if (base.envMapIntensity !== undefined) material.envMapIntensity = base.envMapIntensity
+          material.needsUpdate = true
+          return
+        }
+        material.color.copy(finishColor)
+        // The source model has its black finish baked into the colour map.
+        // Keep that texture for Midnight, but use clean PBR metal for lighter finishes.
+        material.map = finish.preserveMap ? base.map : null
+        if (material.metalness !== undefined) material.metalness = finish.metalness
+        if (material.roughness !== undefined) material.roughness = finish.roughness
+        material.envMapIntensity = finish.env
         material.needsUpdate = true
       })
     })

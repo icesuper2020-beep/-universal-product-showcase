@@ -73,7 +73,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     const center = bounds.getCenter(new THREE.Vector3())
     const longestHorizontalSide = Math.max(size.x, size.z, .001)
     return {
-      scale: 4.35 / longestHorizontalSide,
+      scale: 4.7 / longestHorizontalSide,
       offset: center.multiplyScalar(-1),
     }
   }, [model])
@@ -129,7 +129,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     const waveX = Math.sin(introTime.current * 4.2) * .62 * travel
     const waveY = Math.sin(introTime.current * 7.1 + .8) * .22 * travel
     product.current.position.x = THREE.MathUtils.lerp(1.45, 0, arrival) + waveX
-    product.current.position.y = THREE.MathUtils.lerp(2.15, -.18, arrival) + waveY
+    product.current.position.y = THREE.MathUtils.lerp(2.15, .02, arrival) + waveY
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, modelFit.scale, arrival)
     product.current.scale.setScalar(scale)
@@ -169,7 +169,7 @@ export default function AeronScene({ pointer, dragging, onDisplayFocus, onOpen }
         <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#7aa3ff" />
         <pointLight position={[0, -1, 5]} intensity={2.6} color="#5b9eff" />
         <RealLaptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} onOpen={onOpen} />
-        <ContactShadows position={[0, -1.28, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
+        <ContactShadows position={[0, -1.14, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>
     </Canvas>
   )

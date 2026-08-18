@@ -1,98 +1,93 @@
-import { ContactShadows, Float, RoundedBox } from '@react-three/drei'
+import { ContactShadows, Float, useGLTF } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import React from 'react'
-import { Suspense, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
-const shell = new THREE.MeshPhysicalMaterial({
-  color: '#1d2838', metalness: 0.96, roughness: 0.2, clearcoat: 0.62, clearcoatRoughness: 0.16,
-})
-const keyMaterial = new THREE.MeshPhysicalMaterial({ color: '#0b1018', metalness: 0.62, roughness: 0.28, clearcoat: 0.25 })
+const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
 
-function Keyboard() {
-  const keys = useMemo(() => {
-    const result = []
-    const rows = [14, 14, 13, 12, 10]
-    rows.forEach((count, row) => {
-      const width = 0.265
-      const gap = 0.05
-      const total = count * width + (count - 1) * gap
-      for (let column = 0; column < count; column += 1) {
-        result.push({
-          key: `${row}-${column}`,
-          position: [-total / 2 + width / 2 + column * (width + gap), 0.142, -0.91 + row * 0.325],
+function buildScreenTexture() {
+  const canvas = document.createElement('canvas')
+  canvas.width = 1200
+  canvas.height = 720
+  const context = canvas.getContext('2d')
+  const gradient = context.createRadialGradient(820, 330, 10, 700, 360, 620)
+  gradient.addColorStop(0, '#315fff')
+  gradient.addColorStop(.34, '#102b86')
+  gradient.addColorStop(1, '#020716')
+  context.fillStyle = gradient
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  context.textAlign = 'center'
+  context.fillStyle = 'rgba(210,225,255,.78)'
+  context.font = '600 18px Arial'
+  context.fillText('A  E  R  O  N     O  N  E', 600, 280)
+  context.fillStyle = '#ffffff'
+  context.font = '500 82px Arial'
+  context.fillText('Go inside.', 600, 385)
+  context.strokeStyle = 'rgba(210,229,255,.72)'
+  context.lineWidth = 2
+  context.beginPath()
+  context.roundRect(470, 430, 260, 58, 29)
+  context.stroke()
+  context.font = '500 17px Arial'
+  context.fillStyle = '#dce9ff'
+  context.fillText('OPEN THE DISPLAY  →', 600, 466)
+  const texture = new THREE.CanvasTexture(canvas)
+  texture.colorSpace = THREE.SRGBColorSpace
+  texture.flipY = false
+  texture.anisotropy = 8
+  return texture
+}
+
+function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
+  const { scene } = useGLTF(MODEL_URL)
+  const model = useMemo(() => scene.clone(true), [scene])
+  const product = useRef()
+  const introTime = useRef(0)
+  const target = useRef({ x: -.08, y: -.28 })
+  const [displayFocused, setDisplayFocused] = useState(false)
+  const screenTexture = useMemo(buildScreenTexture, [])
+  const displayNode = useMemo(() => model.getObjectByName('laptop display'), [model])
+  const openQuaternion = useMemo(() => displayNode?.quaternion.clone() ?? new THREE.Quaternion(), [displayNode])
+  const closedQuaternion = useMemo(() => {
+    const closed = openQuaternion.clone()
+    closed.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -1.18))
+    return closed
+  }, [openQuaternion])
+
+  useEffect(() => {
+    model.traverse((object) => {
+      if (/asus|tuflogo|tuf logo|outer logo/i.test(object.name)) object.visible = false
+      if (object.isMesh) {
+        object.castShadow = true
+        object.receiveShadow = true
+        const materials = Array.isArray(object.material) ? object.material : [object.material]
+        materials.filter(Boolean).forEach((material) => {
+          material.envMapIntensity = 1.1
+          if (material.metalness !== undefined) material.metalness = Math.max(material.metalness, .35)
+          if (material.roughness !== undefined) material.roughness = Math.min(material.roughness, .42)
         })
       }
     })
-    return result
-  }, [])
+    const wallpaper = model.getObjectByName('wallpaper')
+    if (wallpaper?.material) wallpaper.material = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false })
+  }, [model, screenTexture])
 
-  return keys.map(({ key, position }) => (
-    <RoundedBox key={key} args={[0.265, 0.032, 0.255]} radius={0.038} smoothness={3} position={position} material={keyMaterial} />
-  ))
-}
-
-function Speaker({ x }) {
-  return Array.from({ length: 24 }, (_, index) => (
-    <mesh key={index} position={[x + (index % 4) * 0.07, 0.143, -0.88 + Math.floor(index / 4) * 0.17]}>
-      <cylinderGeometry args={[0.011, 0.011, 0.009, 10]} />
-      <meshBasicMaterial color="#0b0d11" />
-    </mesh>
-  ))
-}
-
-function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
-  const product = useRef()
-  const lid = useRef()
-  const [displayFocused, setDisplayFocused] = useState(false)
-  const target = useRef({ x: -0.12, y: -0.22 })
-  const introTime = useRef(0)
-  const screenTexture = useMemo(() => {
-    const canvas = document.createElement('canvas')
-    canvas.width = 1024
-    canvas.height = 640
-    const context = canvas.getContext('2d')
-    context.clearRect(0, 0, canvas.width, canvas.height)
-    context.textAlign = 'center'
-    context.fillStyle = 'rgba(214,228,255,.72)'
-    context.font = '600 18px Arial'
-    context.letterSpacing = '8px'
-    context.fillText('AERON ONE EXPERIENCE', 512, 248)
-    context.fillStyle = '#ffffff'
-    context.font = '500 76px Arial'
-    context.fillText('Go inside.', 512, 342)
-    context.strokeStyle = 'rgba(205,224,255,.72)'
-    context.lineWidth = 2
-    context.beginPath()
-    context.roundRect(402, 378, 220, 52, 26)
-    context.stroke()
-    context.fillStyle = '#dceaff'
-    context.font = '500 18px Arial'
-    context.fillText('OPEN THE DISPLAY  →', 512, 411)
-    const texture = new THREE.CanvasTexture(canvas)
-    texture.colorSpace = THREE.SRGBColorSpace
-    texture.anisotropy = 8
-    return texture
-  }, [])
-
-  useFrame((state, delta) => {
-    if (!product.current || !lid.current) return
-    introTime.current = Math.min(3.2, introTime.current + delta)
-    const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 1.75)
-    const opening = THREE.MathUtils.smoothstep(introTime.current, 0.72, 2.75)
-    const deadZone = Math.abs(pointer.current.x) < 0.11 && Math.abs(pointer.current.y) < 0.11
-    const focusFactor = displayFocused ? 0.08 : 1
-    target.current.y = displayFocused ? -0.22 : (deadZone ? -0.22 : -0.22 + pointer.current.x * Math.PI * focusFactor)
-    target.current.x = deadZone ? -0.11 : -0.11 - pointer.current.y * 0.18 * focusFactor
-    const damping = 1 - Math.exp(-delta * (dragging.current ? 5.5 : 2.7))
+  useFrame((_, delta) => {
+    if (!product.current) return
+    introTime.current = Math.min(4, introTime.current + delta)
+    const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 1.85)
+    const opening = THREE.MathUtils.smoothstep(introTime.current, .82, 3.15)
+    const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
+    target.current.y = displayFocused ? -.28 : (deadZone ? -.28 : -.28 + pointer.current.x * Math.PI)
+    target.current.x = deadZone ? -.08 : -.08 - pointer.current.y * .16
+    const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
-    product.current.position.y = THREE.MathUtils.lerp(1.45, -0.55, arrival)
-    product.current.position.z = THREE.MathUtils.lerp(-4.2, 0, arrival)
-    const introScale = THREE.MathUtils.lerp(0.34, 0.96, arrival)
-    product.current.scale.setScalar(introScale)
-    const openTarget = THREE.MathUtils.lerp(-1.47, displayFocused ? -0.06 : -0.18, opening)
-    lid.current.rotation.x = THREE.MathUtils.lerp(lid.current.rotation.x, openTarget, 1 - Math.exp(-delta * 3.3))
+    product.current.position.y = THREE.MathUtils.lerp(1.75, -.62, arrival)
+    product.current.position.z = THREE.MathUtils.lerp(-5.5, 0, arrival)
+    const scale = THREE.MathUtils.lerp(.12, .56, arrival)
+    product.current.scale.setScalar(scale)
+    if (displayNode) displayNode.quaternion.copy(closedQuaternion).slerp(openQuaternion, opening)
   })
 
   const focusDisplay = (value) => {
@@ -101,69 +96,14 @@ function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   }
 
   return (
-    <Float speed={0.72} rotationIntensity={0.035} floatIntensity={0.12}>
-      <group ref={product} position={[0, 1.45, -4.2]} rotation={[-0.11, -0.22, 0]} scale={0.34}>
-        {/* ultra-thin machined aluminium lower shell */}
-        <RoundedBox args={[5.42, 0.14, 3.38]} radius={0.14} smoothness={7} material={shell} position={[0, 0, 0]} />
-        <RoundedBox args={[5.28, 0.035, 3.22]} radius={0.11} smoothness={6} position={[0, 0.09, 0]}>
-          <meshPhysicalMaterial color="#263348" metalness={0.94} roughness={0.19} clearcoat={0.5} />
-        </RoundedBox>
-        {/* polished front chamfer */}
-        <mesh position={[0, 0.008, 1.695]}>
-          <boxGeometry args={[4.8, 0.035, 0.025]} />
-          <meshPhysicalMaterial color="#73849a" metalness={1} roughness={0.12} />
-        </mesh>
-        <Keyboard />
-        <Speaker x={-2.25} />
-        <Speaker x={1.98} />
-        <RoundedBox args={[2.18, 0.018, 1.08]} radius={0.075} smoothness={5} position={[0, 0.135, 0.94]}>
-          <meshPhysicalMaterial color="#2a374b" metalness={0.84} roughness={0.18} clearcoat={0.55} />
-        </RoundedBox>
-        <RoundedBox args={[0.9, 0.13, 0.095]} radius={0.045} smoothness={4} position={[0, 0.035, -1.61]} material={shell} />
-        {/* subtle side I/O details */}
-        <mesh position={[-2.69, 0.015, -0.62]} rotation={[0, 0, Math.PI / 2]}>
-          <capsuleGeometry args={[0.025, 0.18, 5, 12]} />
-          <meshBasicMaterial color="#05080d" />
-        </mesh>
-        <mesh position={[-2.69, 0.015, -0.22]} rotation={[0, 0, Math.PI / 2]}>
-          <capsuleGeometry args={[0.025, 0.16, 5, 12]} />
-          <meshBasicMaterial color="#05080d" />
-        </mesh>
-
-        <group ref={lid} position={[0, 0.08, -1.57]} rotation={[-1.47, 0, 0]}>
-          <RoundedBox args={[5.18, 3.24, 0.105]} radius={0.14} smoothness={8} material={shell} position={[0, 1.62, 0]} />
-          <RoundedBox
-            args={[4.98, 3.04, 0.022]}
-            radius={0.08}
-            smoothness={7}
-            position={[0, 1.62, 0.066]}
-            onPointerEnter={() => focusDisplay(true)}
-            onPointerLeave={() => focusDisplay(false)}
-          >
-            <meshBasicMaterial color="#07111f" />
-          </RoundedBox>
-          <mesh position={[0, 1.62, 0.081]}>
-            <planeGeometry args={[4.84, 2.9]} />
-            <shaderMaterial
-              uniforms={{ uTime: { value: 0 } }}
-              vertexShader="varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}"
-              fragmentShader="varying vec2 vUv; void main(){float d=distance(vUv,vec2(.68,.54)); float glow=.16/(d+.14); vec3 c=mix(vec3(.006,.018,.05),vec3(.025,.19,.58),smoothstep(.03,.98,vUv.x)); c+=vec3(.12,.08,.48)*glow*.45; c+=vec3(.06,.3,.78)*smoothstep(.34,.0,abs(d-.28))*.42; gl_FragColor=vec4(c,1.); }"
-            />
-          </mesh>
-          <mesh
-            position={[0, 1.62, 0.084]}
-            onPointerEnter={() => focusDisplay(true)}
-            onPointerLeave={() => focusDisplay(false)}
-            onClick={(event) => { event.stopPropagation(); onOpen() }}
-          >
-            <planeGeometry args={[4.84, 2.9]} />
-            <meshBasicMaterial map={screenTexture} transparent toneMapped={false} />
-          </mesh>
-          <mesh position={[0, 3.12, 0.083]}>
-            <circleGeometry args={[0.026, 24]} />
-            <meshBasicMaterial color="#111923" />
-          </mesh>
-        </group>
+    <Float speed={.55} rotationIntensity={.018} floatIntensity={.08}>
+      <group ref={product} position={[0, 1.75, -5.5]} rotation={[-.08, -.28, 0]} scale={.12}>
+        <primitive
+          object={model}
+          onPointerEnter={() => focusDisplay(true)}
+          onPointerLeave={() => focusDisplay(false)}
+          onClick={(event) => { event.stopPropagation(); onOpen() }}
+        />
       </group>
     </Float>
   )
@@ -171,16 +111,18 @@ function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
 export default function AeronScene({ pointer, dragging, onDisplayFocus, onOpen }) {
   return (
-    <Canvas camera={{ position: [0.12, 3.15, 8.7], fov: 35 }} dpr={[1, 1.7]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
+    <Canvas shadows camera={{ position: [.2, 3.25, 9.2], fov: 34 }} dpr={[1, 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <Suspense fallback={null}>
-        <ambientLight intensity={1.65} />
-        <directionalLight position={[4, 7, 6]} intensity={5.8} color="#fffdf6" />
-        <directionalLight position={[-5, 3, 4]} intensity={3.2} color="#b9d6ff" />
-        <spotLight position={[1, 5, -4]} intensity={10} angle={0.45} penumbra={1} color="#719cff" />
-        <pointLight position={[0, -1, 4]} intensity={2.2} color="#6ca7ff" />
-        <Laptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} onOpen={onOpen} />
-        <ContactShadows position={[0, -0.58, 0]} opacity={0.28} scale={8} blur={3.2} far={3.5} />
+        <ambientLight intensity={1.85} />
+        <directionalLight position={[5, 8, 7]} intensity={6.5} color="#fffdf8" castShadow />
+        <directionalLight position={[-5, 3, 4]} intensity={3.6} color="#b6d4ff" />
+        <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#7aa3ff" />
+        <pointLight position={[0, -1, 5]} intensity={2.6} color="#5b9eff" />
+        <RealLaptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} onOpen={onOpen} />
+        <ContactShadows position={[0, -.68, 0]} opacity={.28} scale={9} blur={3.4} far={4} />
       </Suspense>
     </Canvas>
   )
 }
+
+useGLTF.preload(MODEL_URL)

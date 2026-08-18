@@ -46,6 +46,7 @@ function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const lid = useRef()
   const [displayFocused, setDisplayFocused] = useState(false)
   const target = useRef({ x: -0.12, y: -0.22 })
+  const introTime = useRef(0)
   const screenTexture = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = 1024
@@ -76,16 +77,22 @@ function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
   useFrame((state, delta) => {
     if (!product.current || !lid.current) return
+    introTime.current = Math.min(3.2, introTime.current + delta)
+    const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 1.75)
+    const opening = THREE.MathUtils.smoothstep(introTime.current, 0.72, 2.75)
     const deadZone = Math.abs(pointer.current.x) < 0.11 && Math.abs(pointer.current.y) < 0.11
     const focusFactor = displayFocused ? 0.08 : 1
-    target.current.y = deadZone ? -0.22 : -0.22 + pointer.current.x * 0.34 * focusFactor
-    target.current.x = deadZone ? -0.12 : -0.12 - pointer.current.y * 0.14 * focusFactor
-    const damping = 1 - Math.exp(-delta * (dragging.current ? 7 : 4.2))
-    product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping)
+    target.current.y = displayFocused ? -0.22 : (deadZone ? -0.22 : -0.22 + pointer.current.x * Math.PI * focusFactor)
+    target.current.x = deadZone ? -0.11 : -0.11 - pointer.current.y * 0.18 * focusFactor
+    const damping = 1 - Math.exp(-delta * (dragging.current ? 5.5 : 2.7))
+    product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
-    // The lid geometry is authored upright in the XY plane. Small negative
-    // rotations create a natural open-laptop angle; -PI/2 would lay it flat.
-    lid.current.rotation.x = THREE.MathUtils.lerp(lid.current.rotation.x, displayFocused ? -0.06 : -0.18, 1 - Math.exp(-delta * 3.2))
+    product.current.position.y = THREE.MathUtils.lerp(1.45, -0.55, arrival)
+    product.current.position.z = THREE.MathUtils.lerp(-4.2, 0, arrival)
+    const introScale = THREE.MathUtils.lerp(0.34, 0.96, arrival)
+    product.current.scale.setScalar(introScale)
+    const openTarget = THREE.MathUtils.lerp(-1.47, displayFocused ? -0.06 : -0.18, opening)
+    lid.current.rotation.x = THREE.MathUtils.lerp(lid.current.rotation.x, openTarget, 1 - Math.exp(-delta * 3.3))
   })
 
   const focusDisplay = (value) => {
@@ -95,7 +102,7 @@ function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
   return (
     <Float speed={0.72} rotationIntensity={0.035} floatIntensity={0.12}>
-      <group ref={product} position={[0, -0.48, 0]} rotation={[-0.11, -0.22, 0]} scale={0.94}>
+      <group ref={product} position={[0, 1.45, -4.2]} rotation={[-0.11, -0.22, 0]} scale={0.34}>
         {/* ultra-thin machined aluminium lower shell */}
         <RoundedBox args={[5.42, 0.14, 3.38]} radius={0.14} smoothness={7} material={shell} position={[0, 0, 0]} />
         <RoundedBox args={[5.28, 0.035, 3.22]} radius={0.11} smoothness={6} position={[0, 0.09, 0]}>
@@ -123,7 +130,7 @@ function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
           <meshBasicMaterial color="#05080d" />
         </mesh>
 
-        <group ref={lid} position={[0, 0.08, -1.57]} rotation={[-0.18, 0, 0]}>
+        <group ref={lid} position={[0, 0.08, -1.57]} rotation={[-1.47, 0, 0]}>
           <RoundedBox args={[5.18, 3.24, 0.105]} radius={0.14} smoothness={8} material={shell} position={[0, 1.62, 0]} />
           <RoundedBox
             args={[4.98, 3.04, 0.022]}

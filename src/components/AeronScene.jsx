@@ -1,4 +1,4 @@
-import { ContactShadows, Float, useGLTF } from '@react-three/drei'
+import { ContactShadows, Float, Html, useGLTF } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
 import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
@@ -52,7 +52,7 @@ function buildScreenTexture() {
   return texture
 }
 
-function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch }) {
+function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch, onFeature }) {
   const { scene } = useGLTF(MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
   const product = useRef()
@@ -61,9 +61,12 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   const introTime = useRef(0)
   const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
+  const [hotspotsReady, setHotspotsReady] = useState(false)
+  const hotspotsActivated = useRef(false)
   const screenTexture = useMemo(buildScreenTexture, [])
   // GLTFLoader sanitizes spaces in node names to underscores.
   const displayNode = useMemo(() => model.getObjectByName('laptop_display') || model.getObjectByName('laptop display'), [model])
+  const deckNode = useMemo(() => model.getObjectByName('DECK'), [model])
   const modelFit = useMemo(() => {
     // The downloaded GLB uses authoring-unit transforms, so a fixed scale makes
     // it appear tiny. Fit it to a predictable hero width and pivot around its
@@ -72,12 +75,21 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
     const bounds = new THREE.Box3().setFromObject(model)
     const size = bounds.getSize(new THREE.Vector3())
     const center = bounds.getCenter(new THREE.Vector3())
+    const displayCenter = displayNode ? new THREE.Box3().setFromObject(displayNode).getCenter(new THREE.Vector3()).sub(center.clone()) : new THREE.Vector3(0, size.y * .28, 0)
+    const deckBounds = deckNode ? new THREE.Box3().setFromObject(deckNode) : bounds
+    const deckCenter = deckBounds.getCenter(new THREE.Vector3()).sub(center.clone())
+    const deckSize = deckBounds.getSize(new THREE.Vector3())
     const longestHorizontalSide = Math.max(size.x, size.z, .001)
     return {
       scale: 4.7 / longestHorizontalSide,
-      offset: center.multiplyScalar(-1),
+      offset: center.clone().multiplyScalar(-1),
+      hotspots: {
+        display: displayCenter,
+        engine: deckCenter.clone().add(new THREE.Vector3(-deckSize.x * .08, deckSize.y * .38, -deckSize.z * .08)),
+        cooling: deckCenter.clone().add(new THREE.Vector3(deckSize.x * .28, deckSize.y * .3, deckSize.z * .12)),
+      },
     }
-  }, [model])
+  }, [model, displayNode, deckNode])
   const openHinge = useMemo(() => displayNode?.rotation.z ?? 1.136, [displayNode])
 
   // Close the physical hinge before the browser paints the very first frame.
@@ -132,6 +144,10 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   useFrame((_, delta) => {
     if (!product.current) return
     introTime.current = Math.min(4, introTime.current + delta)
+    if (!hotspotsActivated.current && introTime.current > 3.75) {
+      hotspotsActivated.current = true
+      setHotspotsReady(true)
+    }
     // A deliberate two-act reveal: closed product flies in first, then opens
     // only after it has settled into its final hero position.
     const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 2.35)
@@ -179,6 +195,19 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
             else onOpen()
           }}
         />
+        {hotspotsReady && (
+          <>
+            <Html position={modelFit.hotspots.display.toArray()} center distanceFactor={7} zIndexRange={[30, 1]}>
+              <button className="model-hotspot display-point" type="button" onClick={(event) => { event.stopPropagation(); onFeature(1) }}><i /><span>Immersive display</span></button>
+            </Html>
+            <Html position={modelFit.hotspots.engine.toArray()} center distanceFactor={7} zIndexRange={[30, 1]}>
+              <button className="model-hotspot engine-point" type="button" onClick={(event) => { event.stopPropagation(); onFeature(0) }}><i /><span>Aeron silicon</span></button>
+            </Html>
+            <Html position={modelFit.hotspots.cooling.toArray()} center distanceFactor={7} zIndexRange={[30, 1]}>
+              <button className="model-hotspot cooling-point" type="button" onClick={(event) => { event.stopPropagation(); onFeature(2) }}><i /><span>SilentFlow cooling</span></button>
+            </Html>
+          </>
+        )}
       </group>
     </Float>
   )
@@ -201,7 +230,7 @@ function ReactiveLights({ pointer }) {
   )
 }
 
-export default function AeronScene({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch }) {
+export default function AeronScene({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch, onFeature }) {
   const compactDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
   return (
     <Canvas shadows={!compactDevice} camera={{ position: [.2, 3.25, 9.2], fov: 34 }} dpr={[1, compactDevice ? 1.25 : 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
@@ -210,7 +239,7 @@ export default function AeronScene({ pointer, dragging, productColor, onDisplayF
         <ReactiveLights pointer={pointer} />
         <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#7aa3ff" />
         <pointLight position={[0, -1, 5]} intensity={2.6} color="#5b9eff" />
-        <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
+        <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} onFeature={onFeature} />
         <ContactShadows position={[0, -1, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>
     </Canvas>

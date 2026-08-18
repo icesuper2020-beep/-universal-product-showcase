@@ -7,7 +7,7 @@ const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
 const BRAND_OBJECT_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 const BRAND_MATERIAL_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo/i
 const CHASSIS_PATTERN = /(^|\s)(mold(?:\s|_|\.|$)|deck2?(?:\s|_|\.|$)|laptop[ _]display|display[ _]sqr)/i
-const CHASSIS_EXCLUDE_PATTERN = /wallpaper|keys?|wasd|backlight|keylight|led|power|logo|pendrive|screen/i
+const CHASSIS_EXCLUDE_PATTERN = /wallpaper|keys?|wasd|backlight|keylight|led|power|logo|pendrive/i
 const CLOSED_HINGE = Math.PI - .018
 const FRONT_YAW = -Math.PI / 2
 const HERO_YAW = FRONT_YAW - .3
@@ -267,7 +267,9 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
         material.needsUpdate = true
       })
     })
-  }, [model, productColor])
+  // Reapply the selected finish after entering/leaving inspection because the
+  // live display texture rebuild also refreshes materials in the source GLB.
+  }, [model, productColor, inspectionMode])
 
   useFrame((_, delta) => {
     if (!product.current) return

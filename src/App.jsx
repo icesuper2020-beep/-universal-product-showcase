@@ -101,9 +101,11 @@ export default function App() {
   }
 
   const enterDisplay = (featureIndex = 0) => {
-    setActiveFeature(featureIndex)
+    setInspectionFeature(featureIndex)
+    setRevealedWords(0)
+    setInspectionMode(true)
     setSearchOpen(false)
-    setDisplayOpen(true)
+    setDisplayOpen(false)
     playAccent(280)
   }
 
@@ -195,7 +197,7 @@ export default function App() {
         </motion.div>
         <motion.div className="product-stage" initial={{ opacity: 0 }} animate={ready ? { opacity: 1 } : {}} transition={{ duration: .35 }}>
           {webGLAvailable.current
-            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={FEATURES[inspectionFeature]} revealedWords={revealedWords} onInspect={() => { setInspectionMode(true); inspectFeature(3) }} onDisplayFocus={setDisplayFocused} onOpen={() => inspectionMode ? inspectFeature(inspectionFeature) : enterDisplay(1)} onSearch={() => inspectionMode ? inspectFeature(0) : (setSearchOpen(true), playAccent(420))} />
+            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={FEATURES[inspectionFeature]} revealedWords={revealedWords} onInspect={() => enterDisplay(3)} onDisplayFocus={setDisplayFocused} onOpen={() => inspectionMode ? inspectFeature(inspectionFeature) : enterDisplay(1)} onSearch={() => inspectionMode ? inspectFeature(0) : enterDisplay(0)} />
             : <ProductFallback />}
           <div className="color-selector" aria-label="Choose chassis finish">
             <span>FINISH</span>

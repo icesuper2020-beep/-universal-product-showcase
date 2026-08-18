@@ -5,6 +5,7 @@ import * as THREE from 'three'
 
 const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
 const BRAND_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
+const CLOSED_HINGE = Math.PI - .018
 
 function buildScreenTexture() {
   const canvas = document.createElement('canvas')
@@ -46,7 +47,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const revealLight = useRef()
   const screenMaterial = useRef()
   const introTime = useRef(0)
-  const target = useRef({ x: .28, y: -1.3 })
+  const target = useRef({ x: -.32, y: -1.3 })
   const [displayFocused, setDisplayFocused] = useState(false)
   const screenTexture = useMemo(buildScreenTexture, [])
   // GLTFLoader sanitizes spaces in node names to underscores.
@@ -71,7 +72,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   // Directly controlling the authored Z hinge is more reliable for this GLB
   // than composing an additional quaternion rotation.
   useLayoutEffect(() => {
-    if (displayNode) displayNode.rotation.z = .018
+    if (displayNode) displayNode.rotation.z = CLOSED_HINGE
   }, [displayNode])
 
   useEffect(() => {
@@ -107,7 +108,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     const interactiveY = displayFocused ? -.28 : (deadZone ? -.28 : -.28 + pointer.current.x * Math.PI)
     const interactiveX = deadZone ? -.08 : -.08 - pointer.current.y * .16
     target.current.y = THREE.MathUtils.lerp(-1.3, interactiveY, arrival)
-    target.current.x = THREE.MathUtils.lerp(.28, interactiveX, arrival)
+    target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
@@ -120,7 +121,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, modelFit.scale, arrival)
     product.current.scale.setScalar(scale)
-    if (displayNode) displayNode.rotation.z = THREE.MathUtils.lerp(.018, openHinge, opening)
+    if (displayNode) displayNode.rotation.z = THREE.MathUtils.lerp(CLOSED_HINGE, openHinge, opening)
     if (screenMaterial.current) screenMaterial.current.opacity = THREE.MathUtils.smoothstep(opening, .18, .82)
     if (revealLight.current) revealLight.current.intensity = Math.sin(opening * Math.PI) * 3.2 + opening * .55
   })
@@ -132,7 +133,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
   return (
     <Float speed={.55} rotationIntensity={.018} floatIntensity={.08}>
-      <group ref={product} position={[1.45, 2.15, -8]} rotation={[.28, -1.3, .16]} scale={modelFit.scale * .035}>
+      <group ref={product} position={[1.45, 2.15, -8]} rotation={[-.32, -1.3, .16]} scale={modelFit.scale * .035}>
         <pointLight ref={revealLight} position={[0, 1.2, 1.4]} intensity={0} color="#4f78ff" distance={5} decay={2} />
         <primitive
           object={model}

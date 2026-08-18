@@ -58,6 +58,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   const product = useRef()
   const revealLight = useRef()
   const screenMaterial = useRef()
+  const keyboardGlowMaterials = useRef([])
   const introTime = useRef(0)
   const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
@@ -89,11 +90,33 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   }, [displayNode])
 
   useEffect(() => {
+    keyboardGlowMaterials.current = []
     model.traverse((object) => {
       const objectMaterials = Array.isArray(object.material) ? object.material : [object.material]
       const isBrandElement = BRAND_OBJECT_PATTERN.test(object.name) || objectMaterials.some((material) => material && BRAND_MATERIAL_PATTERN.test(material.name))
       if (isBrandElement) object.visible = false
       if (object.isMesh) {
+        const hierarchy = []
+        let node = object
+        while (node && node !== model) {
+          hierarchy.push(node.name || '')
+          node = node.parent
+        }
+        const keyboardPart = /keys phy|backlight|keylight|notification led|^led$|^keys$|wasd key/i.test(hierarchy.join(' '))
+        if (keyboardPart) {
+          const sourceMaterials = Array.isArray(object.material) ? object.material : [object.material]
+          const glowingMaterials = sourceMaterials.filter(Boolean).map((material) => material.clone())
+          object.material = Array.isArray(object.material) ? glowingMaterials : glowingMaterials[0]
+          glowingMaterials.forEach((material) => {
+            const isLightLayer = /backlight|keylight|notification led|^led$/i.test(hierarchy.join(' '))
+            if ('emissive' in material) {
+              material.emissive = new THREE.Color(isLightLayer ? '#8bc3ff' : '#5897e8')
+              material.emissiveIntensity = 0
+            }
+            material.transparent = true
+            keyboardGlowMaterials.current.push({ material, isLightLayer, baseOpacity: material.opacity ?? 1 })
+          })
+        }
         object.castShadow = true
         object.receiveShadow = true
         objectMaterials.filter(Boolean).forEach((material) => {
@@ -156,6 +179,12 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
     product.current.scale.setScalar(scale)
     if (displayNode) displayNode.rotation.z = THREE.MathUtils.lerp(CLOSED_HINGE, openHinge, opening)
     if (screenMaterial.current) screenMaterial.current.opacity = THREE.MathUtils.smoothstep(opening, .18, .82)
+    const keyboardReveal = THREE.MathUtils.smoothstep(opening, .28, .94)
+    const keyboardBreath = .9 + Math.sin(introTime.current * 1.65) * .1
+    keyboardGlowMaterials.current.forEach(({ material, isLightLayer, baseOpacity }) => {
+      if ('emissiveIntensity' in material) material.emissiveIntensity = keyboardReveal * keyboardBreath * (isLightLayer ? 2.1 : .42)
+      material.opacity = baseOpacity * (isLightLayer ? THREE.MathUtils.lerp(.2, 1, keyboardReveal) : 1)
+    })
     if (revealLight.current) revealLight.current.intensity = Math.sin(opening * Math.PI) * 3.2 + opening * .55
   })
 

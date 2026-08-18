@@ -176,7 +176,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
             event.stopPropagation()
             const hit = (event.object?.name || '').toLowerCase()
             if (/key|deck|powerbutton|^a$|^s$|^d$|^w$/.test(hit)) onSearch()
-            else onOpen()
+            else if (event.object === model.getObjectByName('wallpaper')) onOpen()
           }}
         />
       </group>

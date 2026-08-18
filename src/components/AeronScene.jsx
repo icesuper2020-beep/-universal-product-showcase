@@ -4,7 +4,7 @@ import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState 
 import * as THREE from 'three'
 
 const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
-const BRAND_PATTERN = /asus|tuflogo|tuf logo|outer logo|^tuf$/i
+const BRAND_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 
 function buildScreenTexture() {
   const canvas = document.createElement('canvas')
@@ -49,7 +49,8 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const target = useRef({ x: .28, y: -1.3 })
   const [displayFocused, setDisplayFocused] = useState(false)
   const screenTexture = useMemo(buildScreenTexture, [])
-  const displayNode = useMemo(() => model.getObjectByName('laptop display'), [model])
+  // GLTFLoader sanitizes spaces in node names to underscores.
+  const displayNode = useMemo(() => model.getObjectByName('laptop_display') || model.getObjectByName('laptop display'), [model])
   const modelFit = useMemo(() => {
     // The downloaded GLB uses authoring-unit transforms, so a fixed scale makes
     // it appear tiny. Fit it to a predictable hero width and pivot around its

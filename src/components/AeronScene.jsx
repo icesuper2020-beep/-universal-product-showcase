@@ -56,7 +56,9 @@ function Laptop({ pointer, dragging, onDisplayFocus }) {
     const damping = 1 - Math.exp(-delta * (dragging.current ? 7 : 4.2))
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
-    lid.current.rotation.x = THREE.MathUtils.lerp(lid.current.rotation.x, displayFocused ? -1.88 : -1.77, 1 - Math.exp(-delta * 3.2))
+    // The lid geometry is authored upright in the XY plane. Small negative
+    // rotations create a natural open-laptop angle; -PI/2 would lay it flat.
+    lid.current.rotation.x = THREE.MathUtils.lerp(lid.current.rotation.x, displayFocused ? -0.06 : -0.18, 1 - Math.exp(-delta * 3.2))
   })
 
   const focusDisplay = (value) => {
@@ -80,7 +82,7 @@ function Laptop({ pointer, dragging, onDisplayFocus }) {
         </RoundedBox>
         <RoundedBox args={[0.78, 0.25, 0.1]} radius={0.04} smoothness={3} position={[0, 0.02, -1.59]} material={shell} />
 
-        <group ref={lid} position={[0, 0.08, -1.57]} rotation={[-1.77, 0, 0]}>
+        <group ref={lid} position={[0, 0.08, -1.57]} rotation={[-0.18, 0, 0]}>
           <RoundedBox args={[5.16, 3.22, 0.16]} radius={0.16} smoothness={6} material={shell} position={[0, 1.61, 0]} />
           <RoundedBox
             args={[4.82, 2.87, 0.035]}

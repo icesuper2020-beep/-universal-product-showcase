@@ -41,11 +41,38 @@ function Speaker({ x }) {
   ))
 }
 
-function Laptop({ pointer, dragging, onDisplayFocus }) {
+function Laptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const product = useRef()
   const lid = useRef()
   const [displayFocused, setDisplayFocused] = useState(false)
   const target = useRef({ x: -0.12, y: -0.22 })
+  const screenTexture = useMemo(() => {
+    const canvas = document.createElement('canvas')
+    canvas.width = 1024
+    canvas.height = 640
+    const context = canvas.getContext('2d')
+    context.clearRect(0, 0, canvas.width, canvas.height)
+    context.textAlign = 'center'
+    context.fillStyle = 'rgba(214,228,255,.72)'
+    context.font = '600 18px Arial'
+    context.letterSpacing = '8px'
+    context.fillText('AERON ONE EXPERIENCE', 512, 248)
+    context.fillStyle = '#ffffff'
+    context.font = '500 76px Arial'
+    context.fillText('Go inside.', 512, 342)
+    context.strokeStyle = 'rgba(205,224,255,.72)'
+    context.lineWidth = 2
+    context.beginPath()
+    context.roundRect(402, 378, 220, 52, 26)
+    context.stroke()
+    context.fillStyle = '#dceaff'
+    context.font = '500 18px Arial'
+    context.fillText('OPEN THE DISPLAY  →', 512, 411)
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.anisotropy = 8
+    return texture
+  }, [])
 
   useFrame((state, delta) => {
     if (!product.current || !lid.current) return
@@ -116,6 +143,15 @@ function Laptop({ pointer, dragging, onDisplayFocus }) {
               fragmentShader="varying vec2 vUv; void main(){float d=distance(vUv,vec2(.68,.54)); float glow=.16/(d+.14); vec3 c=mix(vec3(.006,.018,.05),vec3(.025,.19,.58),smoothstep(.03,.98,vUv.x)); c+=vec3(.12,.08,.48)*glow*.45; c+=vec3(.06,.3,.78)*smoothstep(.34,.0,abs(d-.28))*.42; gl_FragColor=vec4(c,1.); }"
             />
           </mesh>
+          <mesh
+            position={[0, 1.62, 0.084]}
+            onPointerEnter={() => focusDisplay(true)}
+            onPointerLeave={() => focusDisplay(false)}
+            onClick={(event) => { event.stopPropagation(); onOpen() }}
+          >
+            <planeGeometry args={[4.84, 2.9]} />
+            <meshBasicMaterial map={screenTexture} transparent toneMapped={false} />
+          </mesh>
           <mesh position={[0, 3.12, 0.083]}>
             <circleGeometry args={[0.026, 24]} />
             <meshBasicMaterial color="#111923" />
@@ -126,7 +162,7 @@ function Laptop({ pointer, dragging, onDisplayFocus }) {
   )
 }
 
-export default function AeronScene({ pointer, dragging, onDisplayFocus }) {
+export default function AeronScene({ pointer, dragging, onDisplayFocus, onOpen }) {
   return (
     <Canvas camera={{ position: [0.12, 3.15, 8.7], fov: 35 }} dpr={[1, 1.7]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <Suspense fallback={null}>
@@ -135,7 +171,7 @@ export default function AeronScene({ pointer, dragging, onDisplayFocus }) {
         <directionalLight position={[-5, 3, 4]} intensity={3.2} color="#b9d6ff" />
         <spotLight position={[1, 5, -4]} intensity={10} angle={0.45} penumbra={1} color="#719cff" />
         <pointLight position={[0, -1, 4]} intensity={2.2} color="#6ca7ff" />
-        <Laptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} />
+        <Laptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} onOpen={onOpen} />
         <ContactShadows position={[0, -0.58, 0]} opacity={0.28} scale={8} blur={3.2} far={3.5} />
       </Suspense>
     </Canvas>

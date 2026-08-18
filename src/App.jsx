@@ -203,7 +203,7 @@ export default function App() {
             {PRODUCT_COLORS.map((finish) => <button key={finish.id} type="button" className={productColor === finish.id ? 'active' : ''} style={{ '--swatch': finish.hex }} onClick={() => { setProductColor(finish.id); playAccent(360) }} aria-label={finish.label} title={finish.label} />)}
           </div>
           <div className="interaction-hint"><span /> {displayFocused ? 'DISPLAY STABILIZED' : 'MOVE TO EXPLORE'}</div>
-          {inspectionMode && <motion.div className="rotation-guide" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.8 }}><span>↔</span><strong>360°</strong><small>DRAG KEYBOARD / BODY</small></motion.div>}
+          <motion.div className={`rotation-guide ${inspectionMode ? 'is-inspection' : ''}`} initial={{ opacity: 0, y: 8 }} animate={ready ? { opacity: 1, y: 0 } : {}} transition={{ delay: inspectionMode ? 1.8 : 4.2 }}><span>↔</span><strong>360°</strong><small>DRAG KEYBOARD / BODY</small></motion.div>
         </motion.div>
         <AnimatePresence>
           {inspectionMode && <motion.div className="inspection-ui" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 1.15, duration: .65 }}>

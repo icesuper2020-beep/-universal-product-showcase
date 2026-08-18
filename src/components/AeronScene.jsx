@@ -52,7 +52,7 @@ function buildScreenTexture() {
   return texture
 }
 
-function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
+function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch }) {
   const { scene } = useGLTF(MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
   const product = useRef()
@@ -110,6 +110,25 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     }
   }, [model, screenTexture])
 
+  useEffect(() => {
+    const finish = {
+      midnight: new THREE.Color('#111827'),
+      titanium: new THREE.Color('#747a83'),
+      silver: new THREE.Color('#c2c7cd'),
+    }[productColor] || new THREE.Color('#111827')
+    model.traverse((object) => {
+      if (!object.isMesh || object.name === 'wallpaper') return
+      const materials = Array.isArray(object.material) ? object.material : [object.material]
+      materials.filter(Boolean).forEach((material) => {
+        if (!material.color || BRAND_MATERIAL_PATTERN.test(material.name)) return
+        if (!material.userData.aeronBaseColor) material.userData.aeronBaseColor = material.color.clone()
+        const strength = productColor === 'midnight' ? .28 : .56
+        material.color.copy(material.userData.aeronBaseColor).lerp(finish, strength)
+        material.needsUpdate = true
+      })
+    })
+  }, [model, productColor])
+
   useFrame((_, delta) => {
     if (!product.current) return
     introTime.current = Math.min(4, introTime.current + delta)
@@ -153,23 +172,45 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
           position={modelFit.offset.toArray()}
           onPointerEnter={() => focusDisplay(true)}
           onPointerLeave={() => focusDisplay(false)}
-          onClick={(event) => { event.stopPropagation(); onOpen() }}
+          onClick={(event) => {
+            event.stopPropagation()
+            const hit = (event.object?.name || '').toLowerCase()
+            if (/key|deck|powerbutton|^a$|^s$|^d$|^w$/.test(hit)) onSearch()
+            else onOpen()
+          }}
         />
       </group>
     </Float>
   )
 }
 
-export default function AeronScene({ pointer, dragging, onDisplayFocus, onOpen }) {
+function ReactiveLights({ pointer }) {
+  const keyLight = useRef()
+  const rimLight = useRef()
+  useFrame(() => {
+    if (!keyLight.current || !rimLight.current) return
+    keyLight.current.position.x = 5 + pointer.current.x * 4
+    keyLight.current.position.y = 7 + pointer.current.y * 2
+    rimLight.current.position.x = -4 - pointer.current.x * 3
+  })
   return (
-    <Canvas shadows camera={{ position: [.2, 3.25, 9.2], fov: 34 }} dpr={[1, 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
+    <>
+      <directionalLight ref={keyLight} position={[5, 8, 7]} intensity={6.5} color="#fffdf8" castShadow />
+      <directionalLight ref={rimLight} position={[-5, 3, 4]} intensity={3.6} color="#b6d4ff" />
+    </>
+  )
+}
+
+export default function AeronScene({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch }) {
+  const compactDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
+  return (
+    <Canvas shadows={!compactDevice} camera={{ position: [.2, 3.25, 9.2], fov: 34 }} dpr={[1, compactDevice ? 1.25 : 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <Suspense fallback={null}>
         <ambientLight intensity={1.85} />
-        <directionalLight position={[5, 8, 7]} intensity={6.5} color="#fffdf8" castShadow />
-        <directionalLight position={[-5, 3, 4]} intensity={3.6} color="#b6d4ff" />
+        <ReactiveLights pointer={pointer} />
         <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#7aa3ff" />
         <pointLight position={[0, -1, 5]} intensity={2.6} color="#5b9eff" />
-        <RealLaptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} onOpen={onOpen} />
+        <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
         <ContactShadows position={[0, -1, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>
     </Canvas>

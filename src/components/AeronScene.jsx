@@ -59,6 +59,8 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   const revealLight = useRef()
   const screenMaterial = useRef()
   const keyboardGlowMaterials = useRef([])
+  const displayFocusRef = useRef(false)
+  const displayReleaseTimer = useRef(null)
   const introTime = useRef(0)
   const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
@@ -102,19 +104,34 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
           hierarchy.push(node.name || '')
           node = node.parent
         }
-        const keyboardPart = /keys phy|backlight|keylight|notification led|^led$|^keys$|wasd key/i.test(hierarchy.join(' '))
-        if (keyboardPart) {
+        const hierarchyName = hierarchy.join(' ')
+        const materialName = objectMaterials.filter(Boolean).map((material) => material.name || '').join(' ')
+        const isBacklight = /backlight/i.test(hierarchyName) || /keylight/i.test(materialName)
+        const isKeySurface = /keys phy/i.test(hierarchyName) || /(^|\s)keys($|\s)|wasd key/i.test(materialName)
+        if (isBacklight) {
+          const glowMaterial = new THREE.MeshBasicMaterial({
+            color: '#72b8ff',
+            transparent: true,
+            opacity: 0,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            toneMapped: false,
+            side: THREE.DoubleSide,
+          })
+          object.material = glowMaterial
+          object.visible = true
+          object.renderOrder = 3
+          keyboardGlowMaterials.current.push({ material: glowMaterial, isLightLayer: true, baseOpacity: .82 })
+        } else if (isKeySurface) {
           const sourceMaterials = Array.isArray(object.material) ? object.material : [object.material]
           const glowingMaterials = sourceMaterials.filter(Boolean).map((material) => material.clone())
           object.material = Array.isArray(object.material) ? glowingMaterials : glowingMaterials[0]
           glowingMaterials.forEach((material) => {
-            const isLightLayer = /backlight|keylight|notification led|^led$/i.test(hierarchy.join(' '))
             if ('emissive' in material) {
-              material.emissive = new THREE.Color(isLightLayer ? '#8bc3ff' : '#5897e8')
+              material.emissive = new THREE.Color('#8bc3ff')
               material.emissiveIntensity = 0
             }
-            material.transparent = true
-            keyboardGlowMaterials.current.push({ material, isLightLayer, baseOpacity: material.opacity ?? 1 })
+            keyboardGlowMaterials.current.push({ material, isLightLayer: false, baseOpacity: material.opacity ?? 1 })
           })
         }
         object.castShadow = true
@@ -183,14 +200,31 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
     const keyboardBreath = .9 + Math.sin(introTime.current * 1.65) * .1
     keyboardGlowMaterials.current.forEach(({ material, isLightLayer, baseOpacity }) => {
       if ('emissiveIntensity' in material) material.emissiveIntensity = keyboardReveal * keyboardBreath * (isLightLayer ? 2.1 : .42)
-      material.opacity = baseOpacity * (isLightLayer ? THREE.MathUtils.lerp(.2, 1, keyboardReveal) : 1)
+      material.opacity = isLightLayer ? baseOpacity * keyboardReveal * keyboardBreath : baseOpacity
     })
     if (revealLight.current) revealLight.current.intensity = Math.sin(opening * Math.PI) * 3.2 + opening * .55
   })
 
+  useEffect(() => () => window.clearTimeout(displayReleaseTimer.current), [])
+
   const focusDisplay = (value) => {
-    setDisplayFocused(value)
-    onDisplayFocus(value)
+    if (value) {
+      window.clearTimeout(displayReleaseTimer.current)
+      displayReleaseTimer.current = null
+      if (!displayFocusRef.current) {
+        displayFocusRef.current = true
+        setDisplayFocused(true)
+        onDisplayFocus(true)
+      }
+      return
+    }
+    if (displayReleaseTimer.current) return
+    displayReleaseTimer.current = window.setTimeout(() => {
+      displayReleaseTimer.current = null
+      displayFocusRef.current = false
+      setDisplayFocused(false)
+      onDisplayFocus(false)
+    }, 240)
   }
 
   return (
@@ -200,7 +234,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
         <primitive
           object={model}
           position={modelFit.offset.toArray()}
-          onPointerMove={(event) => focusDisplay(event.object === screenNode)}
+          onPointerMove={(event) => focusDisplay(event.intersections.some((intersection) => intersection.object === screenNode))}
           onPointerLeave={() => focusDisplay(false)}
           onClick={(event) => {
             event.stopPropagation()

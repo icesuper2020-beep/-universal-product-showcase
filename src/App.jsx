@@ -162,7 +162,7 @@ export default function App() {
       >
         <div className="hero-copy">
           <motion.p initial={{ opacity: 0, y: 14 }} animate={ready ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.15, duration: .7 }}>AERON ONE</motion.p>
-          <motion.h1 initial={{ opacity: 0, y: 42, filter: 'blur(12px)' }} animate={ready ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}} transition={{ delay: 1.35, duration: 1.05, ease: [0.22, 1, 0.36, 1] }}>Light,<br /><span>reimagined.</span></motion.h1>
+          <motion.h1 initial={{ opacity: 0, y: 42, filter: 'blur(12px)' }} animate={ready ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}} transition={{ delay: 1.35, duration: 1.05, ease: [0.22, 1, 0.36, 1] }}>Light,<span>reimagined.</span></motion.h1>
           <motion.p className="hero-description" initial={{ opacity: 0, y: 18 }} animate={ready ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.85, duration: .75 }}>Powerful enough for everything.<br />Light enough for anywhere.</motion.p>
           <motion.div className="hero-actions" initial={{ opacity: 0, y: 14 }} animate={ready ? { opacity: 1, y: 0 } : {}} transition={{ delay: 2.15, duration: .7 }}>
             <button className="primary-cta" type="button" onClick={() => enterDisplay(0)}>Explore the experience</button>

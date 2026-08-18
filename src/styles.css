@@ -48,6 +48,11 @@ button { font: inherit; }
 .finish-white .scroll-cue i { background:#737984; }
 .finish-white .color-selector,.finish-white .rotation-guide { border-color:rgba(255,255,255,.13); color:#c7cbd1; background:rgba(18,21,26,.62); box-shadow:0 14px 34px rgba(0,0,0,.22); }
 .finish-white .color-selector > span { color:#aeb3bb; }
+.finish-white .inspection-heading span,.finish-white .inspection-note { color:#c8b291; }
+.finish-white .inspection-heading strong { color:#f4f3ef; }
+.finish-white .inspection-close { color:#e5e2dc; border-color:rgba(255,255,255,.16); background:rgba(22,24,28,.68); }
+.finish-white .inspection-features button { color:#d1d4d9; border-color:rgba(255,255,255,.13); background:rgba(28,30,34,.72); box-shadow:0 14px 38px rgba(0,0,0,.25); }
+.finish-white .inspection-features button:hover,.finish-white .inspection-features button.active { color:#f4f2ed; border-color:rgba(200,178,145,.62); background:rgba(46,47,50,.92); }
 .hero-copy { position:relative; z-index:3; width:min(100%,820px); padding-left:clamp(0px,2vw,30px); transform:translateY(-5vh); text-align:left; }
 .hero-copy > p:first-child { margin: 0 0 clamp(20px,2vw,30px); font: 600 10px/1 Manrope,sans-serif; letter-spacing: .38em; color: #68645f; }
 .hero h1 { max-width:none; margin:0; font:400 clamp(74px,7.15vw,136px)/1 "Inter Tight",Arial,sans-serif; letter-spacing:-.028em; color:#1a1917; }

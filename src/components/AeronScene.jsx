@@ -11,7 +11,7 @@ const FRONT_YAW = -Math.PI / 2
 const HERO_YAW = FRONT_YAW - .3
 const ARRIVAL_YAW = HERO_YAW - .72
 
-function buildScreenTexture(feature, revealedWords = 0) {
+function buildScreenTexture(feature, revealedWords = 0, compactDevice = false) {
   const canvas = document.createElement('canvas')
   canvas.width = 2048
   canvas.height = 1280
@@ -25,41 +25,41 @@ function buildScreenTexture(feature, revealedWords = 0) {
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.textAlign = 'center'
   context.fillStyle = '#eadbc9'
-  context.font = '700 31px Arial'
+  context.font = `700 ${compactDevice ? 42 : 31}px Arial`
   context.shadowColor = 'rgba(190,156,116,.62)'
   context.shadowBlur = 8
-  context.fillText(feature ? feature.eyebrow.split('').join(' ') : 'A E R O N   O N E   E X P E R I E N C E', 1024, feature ? 300 : 464)
+  context.fillText(feature ? feature.eyebrow.split('').join(' ') : 'A E R O N   O N E', 1024, feature ? (compactDevice ? 280 : 300) : (compactDevice ? 430 : 464))
   context.fillStyle = '#ffffff'
-  context.font = feature ? '600 180px Arial' : '600 154px Arial'
-  context.shadowBlur = 14
-  context.fillText(feature ? feature.metric : 'Go inside.', 1024, feature ? 520 : 680)
+  context.font = feature ? `700 ${compactDevice ? 226 : 180}px Arial` : `700 ${compactDevice ? 224 : 154}px Arial`
+  context.shadowBlur = compactDevice ? 24 : 14
+  context.fillText(feature ? feature.metric : 'Go inside.', 1024, feature ? (compactDevice ? 520 : 520) : (compactDevice ? 675 : 680))
   if (feature) {
-    context.font = '600 68px Arial'
+    context.font = `700 ${compactDevice ? 86 : 68}px Arial`
     context.fillStyle = '#f4eadf'
-    context.fillText(feature.title, 1024, 655)
+    context.fillText(feature.title, 1024, compactDevice ? 670 : 655)
     const words = feature.body.split(' ').slice(0, revealedWords)
-    context.font = '400 42px Arial'
+    context.font = `500 ${compactDevice ? 50 : 42}px Arial`
     context.fillStyle = '#c8b7a4'
     context.shadowBlur = 0
     const lines = []
     let line = ''
     words.forEach((word) => {
       const candidate = `${line} ${word}`.trim()
-      if (context.measureText(candidate).width > 1460) { lines.push(line); line = word } else line = candidate
+      if (context.measureText(candidate).width > (compactDevice ? 1540 : 1460)) { lines.push(line); line = word } else line = candidate
     })
     if (line) lines.push(line)
-    lines.slice(0, 3).forEach((text, index) => context.fillText(text, 1024, 775 + index * 62))
+    lines.slice(0, compactDevice ? 2 : 3).forEach((text, index) => context.fillText(text, 1024, (compactDevice ? 800 : 775) + index * (compactDevice ? 72 : 62)))
   }
   if (!feature) {
   context.strokeStyle = 'rgba(235,218,197,.72)'
-  context.lineWidth = 4
+  context.lineWidth = compactDevice ? 7 : 4
   context.beginPath()
-  context.roundRect(774, 752, 500, 106, 53)
+  context.roundRect(compactDevice ? 694 : 774, compactDevice ? 770 : 752, compactDevice ? 660 : 500, compactDevice ? 142 : 106, compactDevice ? 71 : 53)
   context.stroke()
-  context.font = '700 29px Arial'
+  context.font = `700 ${compactDevice ? 39 : 29}px Arial`
   context.fillStyle = '#f6efe7'
   context.shadowBlur = 5
-  context.fillText('OPEN THE DISPLAY  →', 1024, 819)
+  context.fillText('OPEN THE DISPLAY  →', 1024, compactDevice ? 858 : 819)
   }
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
@@ -88,7 +88,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   const dragState = useRef({ active: false, startX: 0, startYaw: FRONT_YAW, moved: false })
   const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
-  const screenTexture = useMemo(() => buildScreenTexture(inspectionMode ? inspectionFeature : null, revealedWords), [inspectionMode, inspectionFeature, revealedWords])
+  const screenTexture = useMemo(() => buildScreenTexture(inspectionMode ? inspectionFeature : null, revealedWords, compactDevice), [inspectionMode, inspectionFeature, revealedWords, compactDevice])
   // GLTFLoader sanitizes spaces in node names to underscores.
   const displayNode = useMemo(() => model.getObjectByName('laptop_display') || model.getObjectByName('laptop display'), [model])
   const screenNode = useMemo(() => model.getObjectByName('wallpaper'), [model])
@@ -268,7 +268,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     product.current.position.x = THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX
     product.current.position.y = THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
-    const mobileFit = compactDevice ? .7 : 1
+    const mobileFit = compactDevice ? .76 : 1
     const settledScale = modelFit.scale * mobileFit * THREE.MathUtils.lerp(1, .96, inspectProgress)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, settledScale, arrival)
     product.current.scale.setScalar(scale)
@@ -371,7 +371,7 @@ function ReactiveLights({ pointer }) {
 export default function AeronScene({ pointer, dragging, productColor, inspectionMode, inspectionFeature, revealedWords, onInspect, onDisplayFocus, onOpen, onSearch }) {
   const compactDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
   return (
-    <Canvas shadows={!compactDevice} camera={{ position: compactDevice ? [0, 3.55, 10.6] : [.2, 3.25, 9.2], fov: compactDevice ? 38 : 34 }} dpr={[1, compactDevice ? 1.2 : 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
+    <Canvas shadows={!compactDevice} camera={{ position: compactDevice ? [0, 3.45, 10.35] : [.2, 3.25, 9.2], fov: compactDevice ? 37 : 34 }} dpr={[1, compactDevice ? 1.35 : 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <Suspense fallback={null}>
         <ambientLight intensity={1.85} />
         <ReactiveLights pointer={pointer} />

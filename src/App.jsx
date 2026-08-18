@@ -8,7 +8,7 @@ const FEATURES = [
   { id: 'performance', number: '01', eyebrow: 'AERON SILICON', title: 'Power without the noise.', metric: '12-core', metricLabel: 'hybrid architecture', body: 'A precision-tuned performance system that stays responsive, cool and remarkably quiet—whether you are creating, rendering or moving between worlds.', color: '#b28e69' },
   { id: 'display', number: '02', eyebrow: 'LUMINA DISPLAY', title: 'Every detail, illuminated.', metric: '3.2K', metricLabel: 'ultra-clear canvas', body: 'Deep contrast, fluid motion and calibrated colour turn every frame into an immersive workspace built for ambitious ideas.', color: '#c4a47e' },
   { id: 'cooling', number: '03', eyebrow: 'SILENT FLOW', title: 'Engineered to breathe.', metric: '38%', metricLabel: 'more airflow', body: 'A sculpted internal airflow system moves heat silently through independent thermal channels without interrupting your focus.', color: '#d2b896' },
-  { id: 'battery', number: '04', eyebrow: 'ENDURANCE CELL', title: 'Power that stays with you.', metric: '4000 mAh', metricLabel: 'intelligent battery', body: 'A high-density 4000 mAh cell balances lasting performance with an exceptionally light, travel-ready design.', color: '#9b8166' },
+  { id: 'battery', number: '04', eyebrow: 'ENDURANCE CELL', title: 'Power that stays with you.', metric: '76 Wh', metricLabel: 'all-day endurance', body: 'A high-density 76 Wh cell intelligently balances sustained performance with an exceptionally light, travel-ready design.', color: '#9b8166' },
   { id: 'connect', number: '05', eyebrow: 'SEAMLESS I/O', title: 'Everything connects.', metric: '40Gb/s', metricLabel: 'high-speed transfer', body: 'A complete high-bandwidth connection system keeps displays, storage and creative tools moving at full speed.', color: '#b69a79' },
 ]
 
@@ -16,6 +16,13 @@ const PRODUCT_COLORS = [
   { id: 'midnight', label: 'Midnight', hex: '#111827' },
   { id: 'titanium', label: 'Titanium', hex: '#777c84' },
   { id: 'silver', label: 'Silver', hex: '#c6c9ce' },
+]
+
+const STORY_CHAPTERS = [
+  { feature: 0, kicker: '01 / COMPUTE', headline: 'Fast when it matters.\nSilent when it doesn’t.', detail: 'Aeron Silicon distributes demanding work across performance and efficiency cores, delivering instant response without carrying unnecessary heat.', stat: '12', unit: 'CORES' },
+  { feature: 1, kicker: '02 / VISION', headline: 'A canvas that\nfeels borderless.', detail: 'The 3.2K Lumina panel pairs deep contrast with calibrated colour and fluid motion, bringing precision to every frame.', stat: '3.2K', unit: 'LUMINA DISPLAY' },
+  { feature: 2, kicker: '03 / THERMALS', headline: 'Airflow,\nsculpted quietly.', detail: 'Independent thermal channels move more air at lower acoustic pressure, keeping performance consistent while the workspace stays calm.', stat: '38%', unit: 'MORE AIRFLOW' },
+  { feature: 3, kicker: '04 / ENDURANCE', headline: 'Built to outlast\nthe day.', detail: 'A high-density battery and adaptive power system preserve energy moment by moment—without compromising the experience.', stat: '76 Wh', unit: 'ENDURANCE CELL' },
 ]
 
 function supportsWebGL() {
@@ -56,10 +63,25 @@ export default function App() {
   const [inspectionMode, setInspectionMode] = useState(false)
   const [inspectionFeature, setInspectionFeature] = useState(3)
   const [revealedWords, setRevealedWords] = useState(0)
+  const [activeStory, setActiveStory] = useState(0)
   const pointer = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
   const webGLAvailable = useRef(supportsWebGL())
   const audioNodes = useRef(null)
+  const storySteps = useRef([])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter((entry) => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
+      if (!visible) return
+      const index = Number(visible.target.dataset.storyIndex)
+      if (!Number.isNaN(index)) setActiveStory(index)
+    }, { rootMargin: '-28% 0px -28% 0px', threshold: [0.2, 0.45, 0.7] })
+    storySteps.current.filter(Boolean).forEach((node) => observer.observe(node))
+    return () => observer.disconnect()
+  }, [])
 
   useEffect(() => {
     if (!soundOn) return undefined
@@ -256,7 +278,41 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      <section id="design" className="manifesto">
+      <section id="design" className="engineering-story">
+        <div className="story-visual" aria-hidden="true">
+          <div className={`story-core story-core-${FEATURES[STORY_CHAPTERS[activeStory].feature].id}`}>
+            <span className="story-orbit story-orbit-a" />
+            <span className="story-orbit story-orbit-b" />
+            <div className="story-layer story-layer-screen"><i /><b>LUMINA</b></div>
+            <div className="story-layer story-layer-board"><i /><b>AERON SILICON</b></div>
+            <div className="story-layer story-layer-thermal"><i /><b>SILENT FLOW</b></div>
+            <div className="story-layer story-layer-cell"><i /><b>76 Wh CELL</b></div>
+          </div>
+          <div className="story-stat" key={STORY_CHAPTERS[activeStory].stat}>
+            <strong>{STORY_CHAPTERS[activeStory].stat}</strong>
+            <span>{STORY_CHAPTERS[activeStory].unit}</span>
+          </div>
+          <div className="story-progress"><span style={{ transform: `scaleX(${(activeStory + 1) / STORY_CHAPTERS.length})` }} /></div>
+        </div>
+        <div className="story-copy">
+          <div className="story-intro"><span>ENGINEERED FROM THE INSIDE OUT</span><h2>One form.<br />Four systems.</h2></div>
+          {STORY_CHAPTERS.map((chapter, index) => (
+            <article
+              key={chapter.kicker}
+              ref={(node) => { storySteps.current[index] = node }}
+              data-story-index={index}
+              className={activeStory === index ? 'active' : ''}
+            >
+              <span>{chapter.kicker}</span>
+              <h3>{chapter.headline.split('\n').map((line) => <React.Fragment key={line}>{line}<br /></React.Fragment>)}</h3>
+              <p>{chapter.detail}</p>
+              <button type="button" onClick={() => enterDisplay(chapter.feature)}>EXPLORE THIS SYSTEM <b>↗</b></button>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="manifesto">
         <p>PRECISION, MADE VISIBLE</p>
         <h2>Your product deserves<br />more than a product page.</h2>
         <p className="manifesto-copy">A reusable interactive canvas for products that deserve to be explored, understood and remembered.</p>

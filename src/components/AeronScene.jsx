@@ -8,7 +8,8 @@ const BRAND_OBJECT_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 const BRAND_MATERIAL_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo/i
 const CLOSED_HINGE = Math.PI - .018
 const FRONT_YAW = -Math.PI / 2
-const ARRIVAL_YAW = FRONT_YAW - .72
+const HERO_YAW = FRONT_YAW + .3
+const ARRIVAL_YAW = HERO_YAW - .72
 
 function buildScreenTexture() {
   const canvas = document.createElement('canvas')
@@ -117,7 +118,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 2.35)
     const opening = THREE.MathUtils.smoothstep(introTime.current, 2.45, 4)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    const interactiveY = displayFocused ? FRONT_YAW : (deadZone ? FRONT_YAW : FRONT_YAW + pointer.current.x * Math.PI)
+    const interactiveY = displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI)
     const interactiveX = deadZone ? -.08 : -.08 - pointer.current.y * .16
     target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)

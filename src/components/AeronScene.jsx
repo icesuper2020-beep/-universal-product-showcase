@@ -83,7 +83,8 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   const introTime = useRef(0)
   const inspectionYaw = useRef(HERO_YAW)
   const inspectionBlend = useRef(0)
-  const dragState = useRef({ active: false, startX: 0, startYaw: FRONT_YAW })
+  const heroYaw = useRef(HERO_YAW)
+  const dragState = useRef({ active: false, startX: 0, startYaw: FRONT_YAW, moved: false })
   const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
   const screenTexture = useMemo(() => buildScreenTexture(inspectionMode ? inspectionFeature : null, revealedWords), [inspectionMode, inspectionFeature, revealedWords])
@@ -208,19 +209,23 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     inspectionBlend.current = THREE.MathUtils.damp(inspectionBlend.current, inspectionMode ? 1 : 0, .95, delta)
     const inspectProgress = THREE.MathUtils.smootherstep(inspectionBlend.current, 0, 1)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    if (inspectionMode && dragging.current && !displayFocused) {
+    if (dragging.current && !displayFocused) {
       if (!dragState.current.active) {
         dragState.current.active = true
         dragState.current.startX = pointer.current.x
-        dragState.current.startYaw = inspectionYaw.current
+        dragState.current.startYaw = inspectionMode ? inspectionYaw.current : heroYaw.current
       }
-      inspectionYaw.current = dragState.current.startYaw + (pointer.current.x - dragState.current.startX) * Math.PI * 1.5
+      const dragDistance = pointer.current.x - dragState.current.startX
+      if (Math.abs(dragDistance) > .025) dragState.current.moved = true
+      const nextYaw = dragState.current.startYaw + dragDistance * Math.PI * 1.5
+      if (inspectionMode) inspectionYaw.current = nextYaw
+      else heroYaw.current = nextYaw
     } else {
       dragState.current.active = false
     }
     const inspectionTargetY = displayFocused ? FRONT_YAW : inspectionYaw.current
-    const interactiveY = inspectionMode ? inspectionTargetY : (displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI))
-    const interactiveX = inspectionMode ? -.015 : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
+    const interactiveY = inspectionMode ? inspectionTargetY : (displayFocused ? HERO_YAW : heroYaw.current)
+    const interactiveX = inspectionMode ? -.015 : -.08
     target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 4 : (inspectionMode ? 1.15 : 2.6)))
@@ -284,6 +289,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
             const isDisplay = event.object === screenNode
             if (isDisplay) return
             event.stopPropagation()
+            dragState.current.moved = false
             dragging.current = true
             event.target?.setPointerCapture?.(event.pointerId)
           }}
@@ -293,6 +299,10 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
           }}
           onClick={(event) => {
             event.stopPropagation()
+            if (dragState.current.moved) {
+              dragState.current.moved = false
+              return
+            }
             const hit = (event.object?.name || '').toLowerCase()
             if (/key|deck|powerbutton|^a$|^s$|^d$|^w$/.test(hit)) onSearch()
             else if (event.object === screenNode) onOpen()

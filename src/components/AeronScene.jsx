@@ -1,6 +1,6 @@
 import { ContactShadows, Float, useGLTF } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
-import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react'
+import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
@@ -43,6 +43,8 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const { scene } = useGLTF(MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
   const product = useRef()
+  const revealLight = useRef()
+  const screenMaterial = useRef()
   const introTime = useRef(0)
   const target = useRef({ x: .28, y: -1.3 })
   const [displayFocused, setDisplayFocused] = useState(false)
@@ -62,15 +64,14 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
       offset: center.multiplyScalar(-1),
     }
   }, [model])
-  const openQuaternion = useMemo(() => displayNode?.quaternion.clone() ?? new THREE.Quaternion(), [displayNode])
-  const closedQuaternion = useMemo(() => {
-    // This asset's hinge angle is authored on local Z (the node itself is
-    // rotated 180° on X). Preserve that authored orientation and close only
-    // the real hinge channel.
-    const closedEuler = new THREE.Euler().setFromQuaternion(openQuaternion, 'XYZ')
-    closedEuler.z = .025
-    return new THREE.Quaternion().setFromEuler(closedEuler)
-  }, [openQuaternion])
+  const openHinge = useMemo(() => displayNode?.rotation.z ?? 1.136, [displayNode])
+
+  // Close the physical hinge before the browser paints the very first frame.
+  // Directly controlling the authored Z hinge is more reliable for this GLB
+  // than composing an additional quaternion rotation.
+  useLayoutEffect(() => {
+    if (displayNode) displayNode.rotation.z = .018
+  }, [displayNode])
 
   useEffect(() => {
     model.traverse((object) => {
@@ -88,7 +89,10 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
       }
     })
     const wallpaper = model.getObjectByName('wallpaper')
-    if (wallpaper?.material) wallpaper.material = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false })
+    if (wallpaper?.material) {
+      screenMaterial.current = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false, transparent: true, opacity: 0 })
+      wallpaper.material = screenMaterial.current
+    }
   }, [model, screenTexture])
 
   useFrame((_, delta) => {
@@ -107,12 +111,17 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
     product.current.rotation.z = THREE.MathUtils.lerp(product.current.rotation.z, THREE.MathUtils.lerp(.16, 0, arrival), damping)
-    product.current.position.x = THREE.MathUtils.lerp(1.45, 0, arrival)
-    product.current.position.y = THREE.MathUtils.lerp(2.15, -.18, arrival)
+    const travel = 1 - arrival
+    const waveX = Math.sin(introTime.current * 4.2) * .62 * travel
+    const waveY = Math.sin(introTime.current * 7.1 + .8) * .22 * travel
+    product.current.position.x = THREE.MathUtils.lerp(1.45, 0, arrival) + waveX
+    product.current.position.y = THREE.MathUtils.lerp(2.15, -.18, arrival) + waveY
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, modelFit.scale, arrival)
     product.current.scale.setScalar(scale)
-    if (displayNode) displayNode.quaternion.copy(closedQuaternion).slerp(openQuaternion, opening)
+    if (displayNode) displayNode.rotation.z = THREE.MathUtils.lerp(.018, openHinge, opening)
+    if (screenMaterial.current) screenMaterial.current.opacity = THREE.MathUtils.smoothstep(opening, .18, .82)
+    if (revealLight.current) revealLight.current.intensity = Math.sin(opening * Math.PI) * 3.2 + opening * .55
   })
 
   const focusDisplay = (value) => {
@@ -123,6 +132,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   return (
     <Float speed={.55} rotationIntensity={.018} floatIntensity={.08}>
       <group ref={product} position={[1.45, 2.15, -8]} rotation={[.28, -1.3, .16]} scale={modelFit.scale * .035}>
+        <pointLight ref={revealLight} position={[0, 1.2, 1.4]} intensity={0} color="#4f78ff" distance={5} decay={2} />
         <primitive
           object={model}
           position={modelFit.offset.toArray()}

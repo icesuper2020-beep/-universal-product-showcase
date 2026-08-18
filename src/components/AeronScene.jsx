@@ -11,7 +11,7 @@ const FRONT_YAW = -Math.PI / 2
 const HERO_YAW = FRONT_YAW - .3
 const ARRIVAL_YAW = HERO_YAW - .72
 
-function buildScreenTexture() {
+function buildScreenTexture(feature, revealedWords = 0) {
   const canvas = document.createElement('canvas')
   canvas.width = 2048
   canvas.height = 1280
@@ -28,11 +28,29 @@ function buildScreenTexture() {
   context.font = '700 31px Arial'
   context.shadowColor = 'rgba(190,156,116,.62)'
   context.shadowBlur = 8
-  context.fillText('A E R O N   O N E   E X P E R I E N C E', 1024, 464)
+  context.fillText(feature ? feature.eyebrow.split('').join(' ') : 'A E R O N   O N E   E X P E R I E N C E', 1024, feature ? 340 : 464)
   context.fillStyle = '#ffffff'
-  context.font = '600 154px Arial'
+  context.font = feature ? '600 112px Arial' : '600 154px Arial'
   context.shadowBlur = 14
-  context.fillText('Go inside.', 1024, 680)
+  context.fillText(feature ? feature.metric : 'Go inside.', 1024, feature ? 530 : 680)
+  if (feature) {
+    context.font = '500 54px Arial'
+    context.fillStyle = '#f4eadf'
+    context.fillText(feature.title, 1024, 650)
+    const words = feature.body.split(' ').slice(0, revealedWords)
+    context.font = '400 31px Arial'
+    context.fillStyle = '#c8b7a4'
+    context.shadowBlur = 0
+    const lines = []
+    let line = ''
+    words.forEach((word) => {
+      const candidate = `${line} ${word}`.trim()
+      if (context.measureText(candidate).width > 1320) { lines.push(line); line = word } else line = candidate
+    })
+    if (line) lines.push(line)
+    lines.slice(0, 3).forEach((text, index) => context.fillText(text, 1024, 748 + index * 50))
+  }
+  if (!feature) {
   context.strokeStyle = 'rgba(235,218,197,.72)'
   context.lineWidth = 4
   context.beginPath()
@@ -42,6 +60,7 @@ function buildScreenTexture() {
   context.fillStyle = '#f6efe7'
   context.shadowBlur = 5
   context.fillText('OPEN THE DISPLAY  →', 1024, 819)
+  }
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   texture.flipY = false
@@ -52,7 +71,7 @@ function buildScreenTexture() {
   return texture
 }
 
-function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch }) {
+function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectionFeature, revealedWords, onInspect, onDisplayFocus, onOpen, onSearch }) {
   const { scene } = useGLTF(MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
   const product = useRef()
@@ -62,9 +81,10 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   const displayFocusRef = useRef(false)
   const displayReleaseTimer = useRef(null)
   const introTime = useRef(0)
+  const inspectionYaw = useRef(HERO_YAW)
   const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
-  const screenTexture = useMemo(buildScreenTexture, [])
+  const screenTexture = useMemo(() => buildScreenTexture(inspectionMode ? inspectionFeature : null, revealedWords), [inspectionMode, inspectionFeature, revealedWords])
   // GLTFLoader sanitizes spaces in node names to underscores.
   const displayNode = useMemo(() => model.getObjectByName('laptop_display') || model.getObjectByName('laptop display'), [model])
   const screenNode = useMemo(() => model.getObjectByName('wallpaper'), [model])
@@ -151,6 +171,8 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
     }
   }, [model, screenNode, screenTexture])
 
+  useEffect(() => () => screenTexture.dispose(), [screenTexture])
+
   useEffect(() => {
     const finish = {
       midnight: new THREE.Color('#111827'),
@@ -178,8 +200,9 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
     const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 2.35)
     const opening = THREE.MathUtils.smoothstep(introTime.current, 2.45, 4)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    const interactiveY = displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI)
-    const interactiveX = displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22)
+    if (inspectionMode && !displayFocused && !dragging.current) inspectionYaw.current += delta * .16
+    const interactiveY = inspectionMode ? (displayFocused ? HERO_YAW : inspectionYaw.current + pointer.current.x * .24) : (displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI))
+    const interactiveX = inspectionMode ? (displayFocused ? -.08 : THREE.MathUtils.clamp(-.12 - pointer.current.y * .16, -.3, .08)) : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
     target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
@@ -189,8 +212,10 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
     const travel = 1 - arrival
     const waveX = Math.sin(introTime.current * 4.2) * .62 * travel
     const waveY = Math.sin(introTime.current * 7.1 + .8) * .22 * travel
-    product.current.position.x = THREE.MathUtils.lerp(1.45, 0, arrival) + waveX
-    product.current.position.y = THREE.MathUtils.lerp(2.15, .16, arrival) + waveY
+    const inspectX = inspectionMode ? -1.7 : 0
+    const inspectY = inspectionMode ? .62 : .16
+    product.current.position.x = THREE.MathUtils.lerp(product.current.position.x, THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX, 1 - Math.exp(-delta * 2.8))
+    product.current.position.y = THREE.MathUtils.lerp(product.current.position.y, THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY, 1 - Math.exp(-delta * 2.8))
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, modelFit.scale, arrival)
     product.current.scale.setScalar(scale)
@@ -241,6 +266,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
             const hit = (event.object?.name || '').toLowerCase()
             if (/key|deck|powerbutton|^a$|^s$|^d$|^w$/.test(hit)) onSearch()
             else if (event.object === screenNode) onOpen()
+            else onInspect()
           }}
         />
       </group>
@@ -265,7 +291,7 @@ function ReactiveLights({ pointer }) {
   )
 }
 
-export default function AeronScene({ pointer, dragging, productColor, onDisplayFocus, onOpen, onSearch }) {
+export default function AeronScene({ pointer, dragging, productColor, inspectionMode, inspectionFeature, revealedWords, onInspect, onDisplayFocus, onOpen, onSearch }) {
   const compactDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
   return (
     <Canvas shadows={!compactDevice} camera={{ position: [.2, 3.25, 9.2], fov: 34 }} dpr={[1, compactDevice ? 1.25 : 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
@@ -274,7 +300,7 @@ export default function AeronScene({ pointer, dragging, productColor, onDisplayF
         <ReactiveLights pointer={pointer} />
         <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#d0b38f" />
         <pointLight position={[0, -1, 5]} intensity={2.6} color="#a98461" />
-        <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
+        <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={inspectionFeature} revealedWords={revealedWords} onInspect={onInspect} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
         <ContactShadows position={[0, -1, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>
     </Canvas>

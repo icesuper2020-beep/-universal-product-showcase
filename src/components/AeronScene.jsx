@@ -75,7 +75,20 @@ function buildScreenTexture(feature, revealedWords = 0, compactDevice = false) {
 
 function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectionFeature, revealedWords, compactDevice, onInspect, onDisplayFocus, onOpen, onSearch }) {
   const { scene } = useGLTF(MODEL_URL)
-  const model = useMemo(() => scene.clone(true), [scene])
+  const model = useMemo(() => {
+    const clonedModel = scene.clone(true)
+    // The source GLB reuses one DECK material across the aluminium chassis,
+    // keyboard legends and small hardware. Give every mesh its own material
+    // instance so changing the body finish cannot be undone by a later key or
+    // logo mesh that shares the original material.
+    clonedModel.traverse((object) => {
+      if (!object.isMesh || !object.material) return
+      object.material = Array.isArray(object.material)
+        ? object.material.map((material) => material.clone())
+        : object.material.clone()
+    })
+    return clonedModel
+  }, [scene])
   const product = useRef()
   const revealLight = useRef()
   const screenMaterial = useRef()

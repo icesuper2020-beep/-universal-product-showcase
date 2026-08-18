@@ -8,7 +8,7 @@ const BRAND_OBJECT_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 const BRAND_MATERIAL_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo/i
 const CLOSED_HINGE = Math.PI - .018
 const FRONT_YAW = -Math.PI / 2
-const HERO_YAW = FRONT_YAW + .3
+const HERO_YAW = FRONT_YAW - .3
 const ARRIVAL_YAW = HERO_YAW - .72
 
 function buildScreenTexture() {

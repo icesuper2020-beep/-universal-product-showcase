@@ -8,7 +8,7 @@ const FEATURES = [
   { id: 'performance', number: '01', eyebrow: 'AERON SILICON', title: 'Power without the noise.', metric: '12-core', metricLabel: 'hybrid architecture', body: 'A precision-tuned performance system that stays responsive, cool and remarkably quiet—whether you are creating, rendering or moving between worlds.', color: '#b28e69' },
   { id: 'display', number: '02', eyebrow: 'LUMINA DISPLAY', title: 'Every detail, illuminated.', metric: '3.2K', metricLabel: 'ultra-clear canvas', body: 'Deep contrast, fluid motion and calibrated colour turn every frame into an immersive workspace built for ambitious ideas.', color: '#c4a47e' },
   { id: 'cooling', number: '03', eyebrow: 'SILENT FLOW', title: 'Engineered to breathe.', metric: '38%', metricLabel: 'more airflow', body: 'A sculpted internal airflow system moves heat silently through independent thermal channels without interrupting your focus.', color: '#d2b896' },
-  { id: 'battery', number: '04', eyebrow: 'ENDURANCE CELL', title: 'Leave the charger behind.', metric: '20h', metricLabel: 'all-day power', body: 'Intelligent power orchestration learns your rhythm and delivers lasting performance from the first meeting to the final export.', color: '#9b8166' },
+  { id: 'battery', number: '04', eyebrow: 'ENDURANCE CELL', title: 'Power that stays with you.', metric: '4000 mAh', metricLabel: 'intelligent battery', body: 'A high-density 4000 mAh cell balances lasting performance with an exceptionally light, travel-ready design.', color: '#9b8166' },
   { id: 'connect', number: '05', eyebrow: 'SEAMLESS I/O', title: 'Everything connects.', metric: '40Gb/s', metricLabel: 'high-speed transfer', body: 'A complete high-bandwidth connection system keeps displays, storage and creative tools moving at full speed.', color: '#b69a79' },
 ]
 
@@ -53,6 +53,9 @@ export default function App() {
   const [activeFeature, setActiveFeature] = useState(0)
   const [productColor, setProductColor] = useState('midnight')
   const [soundOn, setSoundOn] = useState(false)
+  const [inspectionMode, setInspectionMode] = useState(false)
+  const [inspectionFeature, setInspectionFeature] = useState(3)
+  const [revealedWords, setRevealedWords] = useState(0)
   const pointer = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
   const webGLAvailable = useRef(supportsWebGL())
@@ -104,6 +107,27 @@ export default function App() {
     playAccent(280)
   }
 
+  const inspectFeature = (index) => {
+    setInspectionFeature(index)
+    setRevealedWords(0)
+    playAccent(300 + index * 38)
+  }
+
+  useEffect(() => {
+    if (!inspectionMode) return undefined
+    const words = `${FEATURES[inspectionFeature].title} ${FEATURES[inspectionFeature].body}`.split(' ')
+    const timer = window.setInterval(() => {
+      setRevealedWords((count) => {
+        if (count >= words.length) {
+          window.clearInterval(timer)
+          return count
+        }
+        return count + 1
+      })
+    }, 105)
+    return () => window.clearInterval(timer)
+  }, [inspectionMode, inspectionFeature])
+
   useEffect(() => {
     const modalOpen = displayOpen || searchOpen
     document.body.style.overflow = modalOpen ? 'hidden' : ''
@@ -154,13 +178,13 @@ export default function App() {
 
       <section
         id="experience"
-        className={`hero ${displayFocused ? 'display-focused' : ''}`}
+        className={`hero ${displayFocused ? 'display-focused' : ''} ${inspectionMode ? 'is-inspecting' : ''}`}
         onPointerMove={updatePointer}
         onPointerDown={() => { dragging.current = true }}
         onPointerUp={() => { dragging.current = false }}
         onPointerLeave={() => { dragging.current = false; pointer.current = { x: 0, y: 0 } }}
       >
-        <div className="hero-copy">
+        <motion.div className="hero-copy" animate={inspectionMode ? { x: '-115%', opacity: 0, filter: 'blur(10px)' } : { x: 0, opacity: 1, filter: 'blur(0px)' }} transition={{ duration: .85, ease: [0.22, 1, 0.36, 1] }}>
           <motion.p initial={{ opacity: 0, y: 14 }} animate={ready ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.15, duration: .7 }}>AERON ONE</motion.p>
           <motion.h1 initial={{ opacity: 0, y: 42, filter: 'blur(12px)' }} animate={ready ? { opacity: 1, y: 0, filter: 'blur(0px)' } : {}} transition={{ delay: 1.35, duration: 1.05, ease: [0.22, 1, 0.36, 1] }}>Light,<span>reimagined.</span></motion.h1>
           <motion.p className="hero-description" initial={{ opacity: 0, y: 18 }} animate={ready ? { opacity: 1, y: 0 } : {}} transition={{ delay: 1.85, duration: .75 }}>Powerful enough for everything.<br />Light enough for anywhere.</motion.p>
@@ -168,10 +192,10 @@ export default function App() {
             <button className="primary-cta" type="button" onClick={() => enterDisplay(0)}>Explore the experience</button>
             <a className="text-link" href="#design">Discover the design <span>↗</span></a>
           </motion.div>
-        </div>
+        </motion.div>
         <motion.div className="product-stage" initial={{ opacity: 0 }} animate={ready ? { opacity: 1 } : {}} transition={{ duration: .35 }}>
           {webGLAvailable.current
-            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={setDisplayFocused} onOpen={() => enterDisplay(1)} onSearch={() => { setSearchOpen(true); playAccent(420) }} />
+            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={FEATURES[inspectionFeature]} revealedWords={revealedWords} onInspect={() => { setInspectionMode(true); inspectFeature(3) }} onDisplayFocus={setDisplayFocused} onOpen={() => inspectionMode ? inspectFeature(inspectionFeature) : enterDisplay(1)} onSearch={() => inspectionMode ? inspectFeature(0) : (setSearchOpen(true), playAccent(420))} />
             : <ProductFallback />}
           <div className="color-selector" aria-label="Choose chassis finish">
             <span>FINISH</span>
@@ -179,6 +203,16 @@ export default function App() {
           </div>
           <div className="interaction-hint"><span /> {displayFocused ? 'DISPLAY STABILIZED' : 'MOVE TO EXPLORE'}</div>
         </motion.div>
+        <AnimatePresence>
+          {inspectionMode && <motion.div className="inspection-ui" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: .5 }}>
+            <div className="inspection-heading"><span>INTERACTIVE PRODUCT VIEW</span><strong>Explore what’s inside.</strong></div>
+            <button className="inspection-close" type="button" onClick={() => setInspectionMode(false)}>CLOSE ×</button>
+            <div className="inspection-features">
+              {FEATURES.map((feature, index) => <button key={feature.id} type="button" className={inspectionFeature === index ? 'active' : ''} onClick={() => inspectFeature(index)}><span>{feature.number}</span><strong>{feature.eyebrow}</strong><small>{feature.metric}</small></button>)}
+            </div>
+            <p className="inspection-note">SELECT A FEATURE — DETAILS APPEAR ON THE DISPLAY</p>
+          </motion.div>}
+        </AnimatePresence>
         <div className="hero-index">01 <span>/</span> 05</div>
         <a className="scroll-cue" href="#design"><span>SCROLL TO DISCOVER</span><i /></a>
       </section>

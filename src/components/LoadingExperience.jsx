@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import React from 'react'
 
 const particles = Array.from({ length: 34 }, (_, index) => ({
   id: index,

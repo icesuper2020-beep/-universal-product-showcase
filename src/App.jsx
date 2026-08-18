@@ -171,13 +171,8 @@ export default function App() {
         </div>
         <motion.div className="product-stage" initial={{ opacity: 0 }} animate={ready ? { opacity: 1 } : {}} transition={{ duration: .35 }}>
           {webGLAvailable.current
-            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={setDisplayFocused} onOpen={() => enterDisplay(1)} onSearch={() => { setSearchOpen(true); playAccent(420) }} />
+            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={setDisplayFocused} onOpen={() => enterDisplay(1)} onSearch={() => { setSearchOpen(true); playAccent(420) }} onFeature={enterDisplay} />
             : <ProductFallback />}
-          <div className="hotspots" aria-label="Product feature hotspots">
-            <button className="hotspot hotspot-display" type="button" onClick={() => enterDisplay(1)}><i /><span>Immersive display</span></button>
-            <button className="hotspot hotspot-engine" type="button" onClick={() => enterDisplay(0)}><i /><span>Aeron silicon</span></button>
-            <button className="hotspot hotspot-cooling" type="button" onClick={() => enterDisplay(2)}><i /><span>SilentFlow cooling</span></button>
-          </div>
           <div className="color-selector" aria-label="Choose chassis finish">
             <span>FINISH</span>
             {PRODUCT_COLORS.map((finish) => <button key={finish.id} type="button" className={productColor === finish.id ? 'active' : ''} style={{ '--swatch': finish.hex }} onClick={() => { setProductColor(finish.id); playAccent(360) }} aria-label={finish.label} title={finish.label} />)}

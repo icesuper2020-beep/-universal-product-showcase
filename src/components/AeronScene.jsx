@@ -17,29 +17,29 @@ function buildScreenTexture() {
   canvas.height = 1280
   const context = canvas.getContext('2d')
   const gradient = context.createRadialGradient(1360, 550, 20, 1130, 640, 1040)
-  gradient.addColorStop(0, '#5578ff')
-  gradient.addColorStop(.24, '#284de4')
-  gradient.addColorStop(.52, '#10256f')
-  gradient.addColorStop(1, '#020716')
+  gradient.addColorStop(0, '#b89a78')
+  gradient.addColorStop(.24, '#725b45')
+  gradient.addColorStop(.52, '#2f2923')
+  gradient.addColorStop(1, '#0d0c0a')
   context.fillStyle = gradient
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.textAlign = 'center'
-  context.fillStyle = '#dce8ff'
+  context.fillStyle = '#eadbc9'
   context.font = '700 31px Arial'
-  context.shadowColor = 'rgba(112,150,255,.65)'
+  context.shadowColor = 'rgba(190,156,116,.62)'
   context.shadowBlur = 8
   context.fillText('A E R O N   O N E   E X P E R I E N C E', 1024, 464)
   context.fillStyle = '#ffffff'
   context.font = '600 154px Arial'
   context.shadowBlur = 14
   context.fillText('Go inside.', 1024, 680)
-  context.strokeStyle = 'rgba(210,229,255,.72)'
+  context.strokeStyle = 'rgba(235,218,197,.72)'
   context.lineWidth = 4
   context.beginPath()
   context.roundRect(774, 752, 500, 106, 53)
   context.stroke()
   context.font = '700 29px Arial'
-  context.fillStyle = '#f3f7ff'
+  context.fillStyle = '#f6efe7'
   context.shadowBlur = 5
   context.fillText('OPEN THE DISPLAY  →', 1024, 819)
   const texture = new THREE.CanvasTexture(canvas)
@@ -110,7 +110,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
         const isKeySurface = /keys phy/i.test(hierarchyName) || /(^|\s)keys($|\s)|wasd key/i.test(materialName)
         if (isBacklight) {
           const glowMaterial = new THREE.MeshBasicMaterial({
-            color: '#72b8ff',
+            color: '#d0b18d',
             transparent: true,
             opacity: 0,
             blending: THREE.AdditiveBlending,
@@ -128,7 +128,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
           object.material = Array.isArray(object.material) ? glowingMaterials : glowingMaterials[0]
           glowingMaterials.forEach((material) => {
             if ('emissive' in material) {
-              material.emissive = new THREE.Color('#8bc3ff')
+              material.emissive = new THREE.Color('#d8bd9b')
               material.emissiveIntensity = 0
             }
             keyboardGlowMaterials.current.push({ material, isLightLayer: false, baseOpacity: material.opacity ?? 1 })
@@ -230,7 +230,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   return (
     <Float speed={.55} rotationIntensity={.018} floatIntensity={.08}>
       <group ref={product} position={[1.45, 2.15, -8]} rotation={[-.32, ARRIVAL_YAW, .16]} scale={modelFit.scale * .035}>
-        <pointLight ref={revealLight} position={[0, 1.2, 1.4]} intensity={0} color="#4f78ff" distance={5} decay={2} />
+        <pointLight ref={revealLight} position={[0, 1.2, 1.4]} intensity={0} color="#c8a77f" distance={5} decay={2} />
         <primitive
           object={model}
           position={modelFit.offset.toArray()}
@@ -260,7 +260,7 @@ function ReactiveLights({ pointer }) {
   return (
     <>
       <directionalLight ref={keyLight} position={[5, 8, 7]} intensity={6.5} color="#fffdf8" castShadow />
-      <directionalLight ref={rimLight} position={[-5, 3, 4]} intensity={3.6} color="#b6d4ff" />
+      <directionalLight ref={rimLight} position={[-5, 3, 4]} intensity={3.6} color="#dec8ae" />
     </>
   )
 }
@@ -272,8 +272,8 @@ export default function AeronScene({ pointer, dragging, productColor, onDisplayF
       <Suspense fallback={null}>
         <ambientLight intensity={1.85} />
         <ReactiveLights pointer={pointer} />
-        <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#7aa3ff" />
-        <pointLight position={[0, -1, 5]} intensity={2.6} color="#5b9eff" />
+        <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#d0b38f" />
+        <pointLight position={[0, -1, 5]} intensity={2.6} color="#a98461" />
         <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
         <ContactShadows position={[0, -1, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>

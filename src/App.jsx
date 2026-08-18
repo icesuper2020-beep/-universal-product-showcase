@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from 'framer-motion'
+import React from 'react'
 import { useEffect, useRef, useState } from 'react'
 import AeronScene from './components/AeronScene'
 import LoadingExperience from './components/LoadingExperience'

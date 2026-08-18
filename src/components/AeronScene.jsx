@@ -207,10 +207,9 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     inspectionBlend.current = THREE.MathUtils.damp(inspectionBlend.current, inspectionMode ? 1 : 0, .95, delta)
     const inspectProgress = THREE.MathUtils.smootherstep(inspectionBlend.current, 0, 1)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    if (inspectionMode && inspectProgress > .96 && !displayFocused && !dragging.current) inspectionYaw.current += delta * .065
-    const inspectionTargetY = inspectProgress < .96 ? HERO_YAW : (displayFocused ? HERO_YAW : inspectionYaw.current + pointer.current.x * .16)
+    const inspectionTargetY = HERO_YAW
     const interactiveY = inspectionMode ? inspectionTargetY : (displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI))
-    const interactiveX = inspectionMode ? (inspectProgress < .96 || displayFocused ? -.08 : THREE.MathUtils.clamp(-.1 - pointer.current.y * .12, -.24, .04)) : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
+    const interactiveX = inspectionMode ? -.08 : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
     target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 4 : (inspectionMode ? 1.15 : 2.6)))

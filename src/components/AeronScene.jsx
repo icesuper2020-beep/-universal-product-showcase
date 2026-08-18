@@ -5,22 +5,22 @@ import { Suspense, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 const shell = new THREE.MeshPhysicalMaterial({
-  color: '#242830', metalness: 0.92, roughness: 0.22, clearcoat: 0.45, clearcoatRoughness: 0.2,
+  color: '#1d2838', metalness: 0.96, roughness: 0.2, clearcoat: 0.62, clearcoatRoughness: 0.16,
 })
-const keyMaterial = new THREE.MeshStandardMaterial({ color: '#111319', metalness: 0.5, roughness: 0.38 })
+const keyMaterial = new THREE.MeshPhysicalMaterial({ color: '#0b1018', metalness: 0.62, roughness: 0.28, clearcoat: 0.25 })
 
 function Keyboard() {
   const keys = useMemo(() => {
     const result = []
     const rows = [14, 14, 13, 12, 10]
     rows.forEach((count, row) => {
-      const width = 0.27
-      const gap = 0.055
+      const width = 0.265
+      const gap = 0.05
       const total = count * width + (count - 1) * gap
       for (let column = 0; column < count; column += 1) {
         result.push({
           key: `${row}-${column}`,
-          position: [-total / 2 + width / 2 + column * (width + gap), 0.205, -0.9 + row * 0.34],
+          position: [-total / 2 + width / 2 + column * (width + gap), 0.142, -0.91 + row * 0.325],
         })
       }
     })
@@ -28,14 +28,14 @@ function Keyboard() {
   }, [])
 
   return keys.map(({ key, position }) => (
-    <RoundedBox key={key} args={[0.27, 0.055, 0.27]} radius={0.035} smoothness={2} position={position} material={keyMaterial} />
+    <RoundedBox key={key} args={[0.265, 0.032, 0.255]} radius={0.038} smoothness={3} position={position} material={keyMaterial} />
   ))
 }
 
 function Speaker({ x }) {
   return Array.from({ length: 24 }, (_, index) => (
-    <mesh key={index} position={[x + (index % 4) * 0.075, 0.207, -0.9 + Math.floor(index / 4) * 0.18]}>
-      <cylinderGeometry args={[0.014, 0.014, 0.012, 8]} />
+    <mesh key={index} position={[x + (index % 4) * 0.07, 0.143, -0.88 + Math.floor(index / 4) * 0.17]}>
+      <cylinderGeometry args={[0.011, 0.011, 0.009, 10]} />
       <meshBasicMaterial color="#0b0d11" />
     </mesh>
   ))
@@ -68,42 +68,56 @@ function Laptop({ pointer, dragging, onDisplayFocus }) {
 
   return (
     <Float speed={0.72} rotationIntensity={0.035} floatIntensity={0.12}>
-      <group ref={product} rotation={[-0.12, -0.22, 0]} scale={0.92}>
-        <RoundedBox args={[5.35, 0.22, 3.35]} radius={0.16} smoothness={5} material={shell} position={[0, 0, 0]} />
-        <mesh position={[0, 0.122, 0.02]}>
-          <boxGeometry args={[5.08, 0.035, 3.08]} />
-          <meshStandardMaterial color="#30343c" metalness={0.78} roughness={0.27} />
+      <group ref={product} position={[0, -0.48, 0]} rotation={[-0.11, -0.22, 0]} scale={0.94}>
+        {/* ultra-thin machined aluminium lower shell */}
+        <RoundedBox args={[5.42, 0.14, 3.38]} radius={0.14} smoothness={7} material={shell} position={[0, 0, 0]} />
+        <RoundedBox args={[5.28, 0.035, 3.22]} radius={0.11} smoothness={6} position={[0, 0.09, 0]}>
+          <meshPhysicalMaterial color="#263348" metalness={0.94} roughness={0.19} clearcoat={0.5} />
+        </RoundedBox>
+        {/* polished front chamfer */}
+        <mesh position={[0, 0.008, 1.695]}>
+          <boxGeometry args={[4.8, 0.035, 0.025]} />
+          <meshPhysicalMaterial color="#73849a" metalness={1} roughness={0.12} />
         </mesh>
         <Keyboard />
         <Speaker x={-2.25} />
         <Speaker x={1.98} />
-        <RoundedBox args={[2.05, 0.035, 1.05]} radius={0.055} smoothness={4} position={[0, 0.208, 0.91]}>
-          <meshStandardMaterial color="#383c44" metalness={0.82} roughness={0.23} />
+        <RoundedBox args={[2.18, 0.018, 1.08]} radius={0.075} smoothness={5} position={[0, 0.135, 0.94]}>
+          <meshPhysicalMaterial color="#2a374b" metalness={0.84} roughness={0.18} clearcoat={0.55} />
         </RoundedBox>
-        <RoundedBox args={[0.78, 0.25, 0.1]} radius={0.04} smoothness={3} position={[0, 0.02, -1.59]} material={shell} />
+        <RoundedBox args={[0.9, 0.13, 0.095]} radius={0.045} smoothness={4} position={[0, 0.035, -1.61]} material={shell} />
+        {/* subtle side I/O details */}
+        <mesh position={[-2.69, 0.015, -0.62]} rotation={[0, 0, Math.PI / 2]}>
+          <capsuleGeometry args={[0.025, 0.18, 5, 12]} />
+          <meshBasicMaterial color="#05080d" />
+        </mesh>
+        <mesh position={[-2.69, 0.015, -0.22]} rotation={[0, 0, Math.PI / 2]}>
+          <capsuleGeometry args={[0.025, 0.16, 5, 12]} />
+          <meshBasicMaterial color="#05080d" />
+        </mesh>
 
         <group ref={lid} position={[0, 0.08, -1.57]} rotation={[-0.18, 0, 0]}>
-          <RoundedBox args={[5.16, 3.22, 0.16]} radius={0.16} smoothness={6} material={shell} position={[0, 1.61, 0]} />
+          <RoundedBox args={[5.18, 3.24, 0.105]} radius={0.14} smoothness={8} material={shell} position={[0, 1.62, 0]} />
           <RoundedBox
-            args={[4.82, 2.87, 0.035]}
-            radius={0.09}
-            smoothness={5}
-            position={[0, 1.61, 0.102]}
+            args={[4.98, 3.04, 0.022]}
+            radius={0.08}
+            smoothness={7}
+            position={[0, 1.62, 0.066]}
             onPointerEnter={() => focusDisplay(true)}
             onPointerLeave={() => focusDisplay(false)}
           >
             <meshBasicMaterial color="#07111f" />
           </RoundedBox>
-          <mesh position={[0, 1.61, 0.125]}>
-            <planeGeometry args={[4.62, 2.67]} />
+          <mesh position={[0, 1.62, 0.081]}>
+            <planeGeometry args={[4.84, 2.9]} />
             <shaderMaterial
               uniforms={{ uTime: { value: 0 } }}
               vertexShader="varying vec2 vUv; void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}"
-              fragmentShader="varying vec2 vUv; void main(){float glow=.18/(distance(vUv,vec2(.72,.56))+.18); vec3 c=mix(vec3(.015,.03,.08),vec3(.08,.27,.62),smoothstep(.15,.95,vUv.x)); c+=vec3(.16,.1,.5)*glow*.35; gl_FragColor=vec4(c,1.); }"
+              fragmentShader="varying vec2 vUv; void main(){float d=distance(vUv,vec2(.68,.54)); float glow=.16/(d+.14); vec3 c=mix(vec3(.006,.018,.05),vec3(.025,.19,.58),smoothstep(.03,.98,vUv.x)); c+=vec3(.12,.08,.48)*glow*.45; c+=vec3(.06,.3,.78)*smoothstep(.34,.0,abs(d-.28))*.42; gl_FragColor=vec4(c,1.); }"
             />
           </mesh>
-          <mesh position={[0, 3.02, 0.126]}>
-            <circleGeometry args={[0.032, 18]} />
+          <mesh position={[0, 3.12, 0.083]}>
+            <circleGeometry args={[0.026, 24]} />
             <meshBasicMaterial color="#111923" />
           </mesh>
         </group>
@@ -114,14 +128,15 @@ function Laptop({ pointer, dragging, onDisplayFocus }) {
 
 export default function AeronScene({ pointer, dragging, onDisplayFocus }) {
   return (
-    <Canvas camera={{ position: [0.15, 3.4, 8.4], fov: 36 }} dpr={[1, 1.65]} gl={{ antialias: true, alpha: true }}>
+    <Canvas camera={{ position: [0.12, 3.15, 8.7], fov: 35 }} dpr={[1, 1.7]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <Suspense fallback={null}>
-        <ambientLight intensity={1.2} />
-        <directionalLight position={[4, 7, 6]} intensity={4.2} color="#fffdf6" />
-        <directionalLight position={[-5, 2, 3]} intensity={2.4} color="#a8c8ff" />
-        <spotLight position={[1, 5, -4]} intensity={8} angle={0.45} penumbra={1} color="#758dff" />
+        <ambientLight intensity={1.65} />
+        <directionalLight position={[4, 7, 6]} intensity={5.8} color="#fffdf6" />
+        <directionalLight position={[-5, 3, 4]} intensity={3.2} color="#b9d6ff" />
+        <spotLight position={[1, 5, -4]} intensity={10} angle={0.45} penumbra={1} color="#719cff" />
+        <pointLight position={[0, -1, 4]} intensity={2.2} color="#6ca7ff" />
         <Laptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} />
-        <ContactShadows position={[0, -0.32, 0]} opacity={0.22} scale={8} blur={2.8} far={3.5} />
+        <ContactShadows position={[0, -0.58, 0]} opacity={0.28} scale={8} blur={3.2} far={3.5} />
       </Suspense>
     </Canvas>
   )

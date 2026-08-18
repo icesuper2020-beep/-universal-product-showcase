@@ -28,27 +28,27 @@ function buildScreenTexture(feature, revealedWords = 0) {
   context.font = '700 31px Arial'
   context.shadowColor = 'rgba(190,156,116,.62)'
   context.shadowBlur = 8
-  context.fillText(feature ? feature.eyebrow.split('').join(' ') : 'A E R O N   O N E   E X P E R I E N C E', 1024, feature ? 340 : 464)
+  context.fillText(feature ? feature.eyebrow.split('').join(' ') : 'A E R O N   O N E   E X P E R I E N C E', 1024, feature ? 300 : 464)
   context.fillStyle = '#ffffff'
-  context.font = feature ? '600 112px Arial' : '600 154px Arial'
+  context.font = feature ? '600 180px Arial' : '600 154px Arial'
   context.shadowBlur = 14
-  context.fillText(feature ? feature.metric : 'Go inside.', 1024, feature ? 530 : 680)
+  context.fillText(feature ? feature.metric : 'Go inside.', 1024, feature ? 520 : 680)
   if (feature) {
-    context.font = '500 54px Arial'
+    context.font = '600 68px Arial'
     context.fillStyle = '#f4eadf'
-    context.fillText(feature.title, 1024, 650)
+    context.fillText(feature.title, 1024, 655)
     const words = feature.body.split(' ').slice(0, revealedWords)
-    context.font = '400 31px Arial'
+    context.font = '400 42px Arial'
     context.fillStyle = '#c8b7a4'
     context.shadowBlur = 0
     const lines = []
     let line = ''
     words.forEach((word) => {
       const candidate = `${line} ${word}`.trim()
-      if (context.measureText(candidate).width > 1320) { lines.push(line); line = word } else line = candidate
+      if (context.measureText(candidate).width > 1460) { lines.push(line); line = word } else line = candidate
     })
     if (line) lines.push(line)
-    lines.slice(0, 3).forEach((text, index) => context.fillText(text, 1024, 748 + index * 50))
+    lines.slice(0, 3).forEach((text, index) => context.fillText(text, 1024, 775 + index * 62))
   }
   if (!feature) {
   context.strokeStyle = 'rgba(235,218,197,.72)'
@@ -207,9 +207,9 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     inspectionBlend.current = THREE.MathUtils.damp(inspectionBlend.current, inspectionMode ? 1 : 0, .95, delta)
     const inspectProgress = THREE.MathUtils.smootherstep(inspectionBlend.current, 0, 1)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    const inspectionTargetY = HERO_YAW
+    const inspectionTargetY = FRONT_YAW
     const interactiveY = inspectionMode ? inspectionTargetY : (displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI))
-    const interactiveX = inspectionMode ? -.08 : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
+    const interactiveX = inspectionMode ? -.015 : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
     target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 4 : (inspectionMode ? 1.15 : 2.6)))
@@ -220,11 +220,11 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     const waveX = Math.sin(introTime.current * 4.2) * .62 * travel
     const waveY = Math.sin(introTime.current * 7.1 + .8) * .22 * travel
     const inspectX = THREE.MathUtils.lerp(0, -1.55, inspectProgress)
-    const inspectY = THREE.MathUtils.lerp(.16, .42, inspectProgress)
+    const inspectY = THREE.MathUtils.lerp(.16, .52, inspectProgress)
     product.current.position.x = THREE.MathUtils.lerp(product.current.position.x, THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX, 1 - Math.exp(-delta * .95))
     product.current.position.y = THREE.MathUtils.lerp(product.current.position.y, THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY, 1 - Math.exp(-delta * .95))
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
-    const settledScale = modelFit.scale * THREE.MathUtils.lerp(1, .84, inspectProgress)
+    const settledScale = modelFit.scale * THREE.MathUtils.lerp(1, .96, inspectProgress)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, settledScale, arrival)
     product.current.scale.setScalar(scale)
     if (displayNode) displayNode.rotation.z = THREE.MathUtils.lerp(CLOSED_HINGE, openHinge, opening)

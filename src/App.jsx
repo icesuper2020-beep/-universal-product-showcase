@@ -206,7 +206,7 @@ export default function App() {
           <div className="interaction-hint"><span /> {displayFocused ? 'DISPLAY STABILIZED' : 'MOVE TO EXPLORE'}</div>
         </motion.div>
         <AnimatePresence>
-          {inspectionMode && <motion.div className="inspection-ui" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: .5 }}>
+          {inspectionMode && <motion.div className="inspection-ui" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ delay: 1.15, duration: .65 }}>
             <div className="inspection-heading"><span>INTERACTIVE PRODUCT VIEW</span><strong>Explore what’s inside.</strong></div>
             <button className="inspection-close" type="button" onClick={() => setInspectionMode(false)}>CLOSE ×</button>
             <div className="inspection-features">

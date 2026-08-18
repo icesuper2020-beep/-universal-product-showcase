@@ -209,10 +209,10 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
 
   useEffect(() => {
     const finish = {
-      midnight: { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveMap: true },
-      titanium: { color: '#77736d', metalness: .84, roughness: .2, env: 2.05, preserveMap: false },
-      silver: { color: '#c8c6c1', metalness: .88, roughness: .17, env: 2.25, preserveMap: false },
-    }[productColor] || { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveMap: true }
+      midnight: { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveSurface: true },
+      titanium: { color: '#747b85', metalness: .72, roughness: .25, env: 2.15, preserveSurface: false },
+      silver: { color: '#eef1f4', metalness: .58, roughness: .3, env: 2.55, preserveSurface: false },
+    }[productColor] || { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveSurface: true }
     const finishColor = new THREE.Color(finish.color)
     model.traverse((object) => {
       if (!object.isMesh || object.name === 'wallpaper') return
@@ -232,6 +232,9 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
           material.userData.aeronFinishBase = {
             color: material.color.clone(),
             map: material.map || null,
+            normalMap: material.normalMap || null,
+            roughnessMap: material.roughnessMap || null,
+            metalnessMap: material.metalnessMap || null,
             metalness: material.metalness,
             roughness: material.roughness,
             envMapIntensity: material.envMapIntensity,
@@ -242,6 +245,9 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
           // Never wash out the keyboard legends, ports, LEDs or screen details.
           material.color.copy(base.color)
           material.map = base.map
+          material.normalMap = base.normalMap
+          material.roughnessMap = base.roughnessMap
+          material.metalnessMap = base.metalnessMap
           if (base.metalness !== undefined) material.metalness = base.metalness
           if (base.roughness !== undefined) material.roughness = base.roughness
           if (base.envMapIntensity !== undefined) material.envMapIntensity = base.envMapIntensity
@@ -251,7 +257,10 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
         material.color.copy(finishColor)
         // The source model has its black finish baked into the colour map.
         // Keep that texture for Midnight, but use clean PBR metal for lighter finishes.
-        material.map = finish.preserveMap ? base.map : null
+        material.map = finish.preserveSurface ? base.map : null
+        material.normalMap = finish.preserveSurface ? base.normalMap : null
+        material.roughnessMap = finish.preserveSurface ? base.roughnessMap : null
+        material.metalnessMap = finish.preserveSurface ? base.metalnessMap : null
         if (material.metalness !== undefined) material.metalness = finish.metalness
         if (material.roughness !== undefined) material.roughness = finish.roughness
         material.envMapIntensity = finish.env
@@ -413,6 +422,13 @@ export default function AeronScene({ pointer, dragging, productColor, inspection
         <ReactiveLights pointer={pointer} />
         <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#d0b38f" />
         <pointLight position={[0, -1, 5]} intensity={2.6} color="#a98461" />
+        <pointLight
+          position={[3.4, 3.2, 6.2]}
+          intensity={productColor === 'silver' ? 5.4 : productColor === 'titanium' ? 2.5 : .8}
+          color="#f5f9ff"
+          distance={12}
+          decay={1.7}
+        />
         <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={inspectionFeature} revealedWords={revealedWords} compactDevice={compactDevice} onInspect={onInspect} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
         <ContactShadows position={[0, -1, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>

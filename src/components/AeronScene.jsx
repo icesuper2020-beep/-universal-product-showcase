@@ -71,7 +71,7 @@ function buildScreenTexture(feature, revealedWords = 0) {
   return texture
 }
 
-function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectionFeature, revealedWords, onInspect, onDisplayFocus, onOpen, onSearch }) {
+function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectionFeature, revealedWords, compactDevice, onInspect, onDisplayFocus, onOpen, onSearch }) {
   const { scene } = useGLTF(MODEL_URL)
   const model = useMemo(() => scene.clone(true), [scene])
   const product = useRef()
@@ -260,12 +260,16 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     const travel = 1 - arrival
     const waveX = Math.sin(introTime.current * 4.2) * .62 * travel
     const waveY = Math.sin(introTime.current * 7.1 + .8) * .22 * travel
-    const inspectX = THREE.MathUtils.lerp(2.15, 0, inspectProgress)
-    const inspectY = THREE.MathUtils.lerp(.16, .52, inspectProgress)
+    const heroX = compactDevice ? 0 : 2.15
+    const heroY = compactDevice ? .08 : .16
+    const inspectionY = compactDevice ? .24 : .52
+    const inspectX = THREE.MathUtils.lerp(heroX, 0, inspectProgress)
+    const inspectY = THREE.MathUtils.lerp(heroY, inspectionY, inspectProgress)
     product.current.position.x = THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX
     product.current.position.y = THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
-    const settledScale = modelFit.scale * THREE.MathUtils.lerp(1, .96, inspectProgress)
+    const mobileFit = compactDevice ? .7 : 1
+    const settledScale = modelFit.scale * mobileFit * THREE.MathUtils.lerp(1, .96, inspectProgress)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, settledScale, arrival)
     product.current.scale.setScalar(scale)
     if (displayNode) displayNode.rotation.z = THREE.MathUtils.lerp(CLOSED_HINGE, openHinge, opening)
@@ -367,13 +371,13 @@ function ReactiveLights({ pointer }) {
 export default function AeronScene({ pointer, dragging, productColor, inspectionMode, inspectionFeature, revealedWords, onInspect, onDisplayFocus, onOpen, onSearch }) {
   const compactDevice = typeof window !== 'undefined' && window.matchMedia('(max-width: 760px)').matches
   return (
-    <Canvas shadows={!compactDevice} camera={{ position: [.2, 3.25, 9.2], fov: 34 }} dpr={[1, compactDevice ? 1.25 : 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
+    <Canvas shadows={!compactDevice} camera={{ position: compactDevice ? [0, 3.55, 10.6] : [.2, 3.25, 9.2], fov: compactDevice ? 38 : 34 }} dpr={[1, compactDevice ? 1.2 : 1.65]} gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}>
       <Suspense fallback={null}>
         <ambientLight intensity={1.85} />
         <ReactiveLights pointer={pointer} />
         <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#d0b38f" />
         <pointLight position={[0, -1, 5]} intensity={2.6} color="#a98461" />
-        <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={inspectionFeature} revealedWords={revealedWords} onInspect={onInspect} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
+        <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={inspectionFeature} revealedWords={revealedWords} compactDevice={compactDevice} onInspect={onInspect} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
         <ContactShadows position={[0, -1, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>
     </Canvas>

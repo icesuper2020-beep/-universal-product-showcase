@@ -5,11 +5,11 @@ import AeronScene from './components/AeronScene'
 import LoadingExperience from './components/LoadingExperience'
 
 const FEATURES = [
-  { id: 'performance', number: '01', eyebrow: 'AERON SILICON', title: 'Power without the noise.', metric: '12-core', metricLabel: 'hybrid architecture', body: 'A precision-tuned performance system that stays responsive, cool and remarkably quiet—whether you are creating, rendering or moving between worlds.', color: '#5e7cff' },
-  { id: 'display', number: '02', eyebrow: 'LUMINA DISPLAY', title: 'Every detail, illuminated.', metric: '3.2K', metricLabel: 'ultra-clear canvas', body: 'Deep contrast, fluid motion and calibrated colour turn every frame into an immersive workspace built for ambitious ideas.', color: '#6fb8ff' },
-  { id: 'cooling', number: '03', eyebrow: 'SILENT FLOW', title: 'Engineered to breathe.', metric: '38%', metricLabel: 'more airflow', body: 'A sculpted internal airflow system moves heat silently through independent thermal channels without interrupting your focus.', color: '#8dd9ff' },
-  { id: 'battery', number: '04', eyebrow: 'ENDURANCE CELL', title: 'Leave the charger behind.', metric: '20h', metricLabel: 'all-day power', body: 'Intelligent power orchestration learns your rhythm and delivers lasting performance from the first meeting to the final export.', color: '#8ba8ff' },
-  { id: 'connect', number: '05', eyebrow: 'SEAMLESS I/O', title: 'Everything connects.', metric: '40Gb/s', metricLabel: 'high-speed transfer', body: 'A complete high-bandwidth connection system keeps displays, storage and creative tools moving at full speed.', color: '#78a3ff' },
+  { id: 'performance', number: '01', eyebrow: 'AERON SILICON', title: 'Power without the noise.', metric: '12-core', metricLabel: 'hybrid architecture', body: 'A precision-tuned performance system that stays responsive, cool and remarkably quiet—whether you are creating, rendering or moving between worlds.', color: '#b28e69' },
+  { id: 'display', number: '02', eyebrow: 'LUMINA DISPLAY', title: 'Every detail, illuminated.', metric: '3.2K', metricLabel: 'ultra-clear canvas', body: 'Deep contrast, fluid motion and calibrated colour turn every frame into an immersive workspace built for ambitious ideas.', color: '#c4a47e' },
+  { id: 'cooling', number: '03', eyebrow: 'SILENT FLOW', title: 'Engineered to breathe.', metric: '38%', metricLabel: 'more airflow', body: 'A sculpted internal airflow system moves heat silently through independent thermal channels without interrupting your focus.', color: '#d2b896' },
+  { id: 'battery', number: '04', eyebrow: 'ENDURANCE CELL', title: 'Leave the charger behind.', metric: '20h', metricLabel: 'all-day power', body: 'Intelligent power orchestration learns your rhythm and delivers lasting performance from the first meeting to the final export.', color: '#9b8166' },
+  { id: 'connect', number: '05', eyebrow: 'SEAMLESS I/O', title: 'Everything connects.', metric: '40Gb/s', metricLabel: 'high-speed transfer', body: 'A complete high-bandwidth connection system keeps displays, storage and creative tools moving at full speed.', color: '#b69a79' },
 ]
 
 const PRODUCT_COLORS = [

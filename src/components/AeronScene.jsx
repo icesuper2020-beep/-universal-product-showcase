@@ -221,8 +221,8 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     const waveY = Math.sin(introTime.current * 7.1 + .8) * .22 * travel
     const inspectX = THREE.MathUtils.lerp(2.15, 0, inspectProgress)
     const inspectY = THREE.MathUtils.lerp(.16, .52, inspectProgress)
-    product.current.position.x = THREE.MathUtils.lerp(product.current.position.x, THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX, 1 - Math.exp(-delta * .95))
-    product.current.position.y = THREE.MathUtils.lerp(product.current.position.y, THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY, 1 - Math.exp(-delta * .95))
+    product.current.position.x = THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX
+    product.current.position.y = THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
     const settledScale = modelFit.scale * THREE.MathUtils.lerp(1, .96, inspectProgress)
     const scale = THREE.MathUtils.lerp(modelFit.scale * .035, settledScale, arrival)

@@ -1,5 +1,6 @@
-import { ContactShadows, Environment, Float, RoundedBox, Text } from '@react-three/drei'
+import { ContactShadows, Float, RoundedBox } from '@react-three/drei'
 import { Canvas, useFrame } from '@react-three/fiber'
+import React from 'react'
 import { Suspense, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
@@ -99,8 +100,6 @@ function Laptop({ pointer, dragging, onDisplayFocus }) {
               fragmentShader="varying vec2 vUv; void main(){float glow=.18/(distance(vUv,vec2(.72,.56))+.18); vec3 c=mix(vec3(.015,.03,.08),vec3(.08,.27,.62),smoothstep(.15,.95,vUv.x)); c+=vec3(.16,.1,.5)*glow*.35; gl_FragColor=vec4(c,1.); }"
             />
           </mesh>
-          <Text position={[0, 1.77, 0.15]} fontSize={0.24} color="#f4f7ff" anchorX="center" anchorY="middle">BEYOND THIN.</Text>
-          <Text position={[0, 1.43, 0.15]} fontSize={0.075} color="#9fb7da" anchorX="center" anchorY="middle">ENGINEERED FOR POSSIBILITY</Text>
           <mesh position={[0, 3.02, 0.126]}>
             <circleGeometry args={[0.032, 18]} />
             <meshBasicMaterial color="#111923" />
@@ -121,7 +120,6 @@ export default function AeronScene({ pointer, dragging, onDisplayFocus }) {
         <spotLight position={[1, 5, -4]} intensity={8} angle={0.45} penumbra={1} color="#758dff" />
         <Laptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} />
         <ContactShadows position={[0, -0.32, 0]} opacity={0.22} scale={8} blur={2.8} far={3.5} />
-        <Environment preset="studio" environmentIntensity={0.55} />
       </Suspense>
     </Canvas>
   )

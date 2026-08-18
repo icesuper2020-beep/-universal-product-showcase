@@ -4,7 +4,8 @@ import React, { Suspense, useEffect, useLayoutEffect, useMemo, useRef, useState 
 import * as THREE from 'three'
 
 const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
-const BRAND_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
+const BRAND_OBJECT_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
+const BRAND_MATERIAL_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo/i
 const CLOSED_HINGE = Math.PI - .018
 const FRONT_YAW = -Math.PI / 2
 const ARRIVAL_YAW = FRONT_YAW - .72
@@ -15,18 +16,22 @@ function buildScreenTexture() {
   canvas.height = 720
   const context = canvas.getContext('2d')
   const gradient = context.createRadialGradient(820, 330, 10, 700, 360, 620)
-  gradient.addColorStop(0, '#315fff')
-  gradient.addColorStop(.34, '#102b86')
+  gradient.addColorStop(0, '#5578ff')
+  gradient.addColorStop(.24, '#284de4')
+  gradient.addColorStop(.52, '#10256f')
   gradient.addColorStop(1, '#020716')
   context.fillStyle = gradient
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.textAlign = 'center'
   context.fillStyle = 'rgba(210,225,255,.78)'
   context.font = '600 18px Arial'
-  context.fillText('A  E  R  O  N     O  N  E', 600, 280)
+  context.shadowColor = 'rgba(112,150,255,.8)'
+  context.shadowBlur = 18
+  context.fillText('A  E  R  O  N     O  N  E     E  X  P  E  R  I  E  N  C  E', 600, 276)
   context.fillStyle = '#ffffff'
   context.font = '500 82px Arial'
-  context.fillText('Go inside.', 600, 385)
+  context.shadowBlur = 34
+  context.fillText('Go inside.', 600, 382)
   context.strokeStyle = 'rgba(210,229,255,.72)'
   context.lineWidth = 2
   context.beginPath()
@@ -34,6 +39,7 @@ function buildScreenTexture() {
   context.stroke()
   context.font = '500 17px Arial'
   context.fillStyle = '#dce9ff'
+  context.shadowBlur = 12
   context.fillText('OPEN THE DISPLAY  →', 600, 466)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
@@ -80,7 +86,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   useEffect(() => {
     model.traverse((object) => {
       const objectMaterials = Array.isArray(object.material) ? object.material : [object.material]
-      const isBrandElement = BRAND_PATTERN.test(object.name) || objectMaterials.some((material) => material && BRAND_PATTERN.test(material.name))
+      const isBrandElement = BRAND_OBJECT_PATTERN.test(object.name) || objectMaterials.some((material) => material && BRAND_MATERIAL_PATTERN.test(material.name))
       if (isBrandElement) object.visible = false
       if (object.isMesh) {
         object.castShadow = true
@@ -94,6 +100,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     })
     const wallpaper = model.getObjectByName('wallpaper')
     if (wallpaper?.material) {
+      wallpaper.visible = true
       screenMaterial.current = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false, transparent: true, opacity: 0 })
       wallpaper.material = screenMaterial.current
     }

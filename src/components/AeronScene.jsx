@@ -80,6 +80,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   const keyboardGlowMaterials = useRef([])
   const displayFocusRef = useRef(false)
   const displayReleaseTimer = useRef(null)
+  const poseResetTimer = useRef(null)
   const introTime = useRef(0)
   const inspectionYaw = useRef(HERO_YAW)
   const inspectionBlend = useRef(0)
@@ -106,6 +107,30 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     }
   }, [model])
   const openHinge = useMemo(() => displayNode?.rotation.z ?? 1.136, [displayNode])
+
+  const cancelPoseReset = () => {
+    if (!poseResetTimer.current) return
+    window.clearTimeout(poseResetTimer.current)
+    poseResetTimer.current = null
+  }
+
+  const schedulePoseReset = () => {
+    cancelPoseReset()
+    poseResetTimer.current = window.setTimeout(() => {
+      poseResetTimer.current = null
+      // Pointer capture lets a visitor finish a full turn even after the
+      // cursor briefly leaves the visible silhouette. Reset only once the
+      // drag has genuinely ended and the pointer has stayed away.
+      if (dragging.current) {
+        schedulePoseReset()
+        return
+      }
+      heroYaw.current = HERO_YAW
+      inspectionYaw.current = FRONT_YAW
+    }, 900)
+  }
+
+  useEffect(() => () => cancelPoseReset(), [])
 
   // Close the physical hinge before the browser paints the very first frame.
   // Directly controlling the authored Z hinge is more reliable for this GLB
@@ -283,24 +308,26 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
         <primitive
           object={model}
           position={modelFit.offset.toArray()}
-          onPointerMove={(event) => focusDisplay(event.intersections.some((intersection) => intersection.object === screenNode))}
+          onPointerMove={(event) => {
+            cancelPoseReset()
+            focusDisplay(event.intersections.some((intersection) => intersection.object === screenNode))
+          }}
           onPointerLeave={() => {
             focusDisplay(false)
-            dragging.current = false
-            dragState.current.active = false
-            heroYaw.current = HERO_YAW
-            inspectionYaw.current = FRONT_YAW
+            schedulePoseReset()
           }}
           onPointerDown={(event) => {
             const isDisplay = event.object === screenNode
             if (isDisplay) return
             event.stopPropagation()
+            cancelPoseReset()
             dragState.current.moved = false
             dragging.current = true
             event.target?.setPointerCapture?.(event.pointerId)
           }}
           onPointerUp={(event) => {
             dragging.current = false
+            dragState.current.active = false
             event.target?.releasePointerCapture?.(event.pointerId)
           }}
           onClick={(event) => {

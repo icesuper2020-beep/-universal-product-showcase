@@ -23,7 +23,7 @@ button { font: inherit; }
 .loader-track { width: min(320px,70vw); height: 1px; margin-top: 13px; background: #252a32; }
 .loader-track span { display: block; height: 100%; background: #c5a987; transition: width .1s linear; }
 
-.nav { height: 78px; padding: 0 clamp(24px,5vw,82px); position: absolute; inset: 0 0 auto; z-index: 10; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-bottom: 1px solid rgba(20,22,25,.08); }
+.nav { height: 78px; padding: 0 clamp(24px,5vw,82px); position: absolute; inset: 0 0 auto; z-index: 10; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; border-bottom: 1px solid rgba(20,22,25,.08); transition:color .9s cubic-bezier(.22,1,.36,1),border-color .9s cubic-bezier(.22,1,.36,1),background .9s cubic-bezier(.22,1,.36,1); }
 .brand { display: inline-flex; width: max-content; gap: 11px; align-items: center; font: 600 12px/1 Manrope,sans-serif; letter-spacing: .22em; }
 .brand-mark { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid #252830; font-size: 10px; transform: rotate(45deg); }
 .brand-mark::first-letter { transform: rotate(-45deg); }
@@ -31,8 +31,23 @@ button { font: inherit; }
 .sound-toggle { justify-self: end; border: 0; padding: 10px 0; background: none; font-size: 9px; letter-spacing: .18em; color: #747982; cursor: pointer; }
 .sound-toggle.is-on { color:#80664d; text-shadow:0 0 14px rgba(138,115,91,.32); }
 
-.hero { position: relative; min-height: 100svh; padding: 78px clamp(24px,5vw,82px) 30px; display: grid; grid-template-columns: minmax(310px,.78fr) minmax(520px,1.3fr); align-items: center; background: radial-gradient(circle at 76% 43%,rgba(176,157,133,.24),transparent 35%), linear-gradient(120deg,#f7f4ee 0%,#ded8ce 100%); overflow: hidden; }
+.hero { position: relative; min-height: 100svh; padding: 78px clamp(24px,5vw,82px) 30px; display: grid; grid-template-columns: minmax(310px,.78fr) minmax(520px,1.3fr); align-items: center; background: radial-gradient(circle at 76% 43%,rgba(176,157,133,.24),transparent 35%), linear-gradient(120deg,#f7f4ee 0%,#ded8ce 100%); overflow: hidden; transition:color .9s cubic-bezier(.22,1,.36,1); }
+.hero::before { content:""; position:absolute; inset:0; z-index:0; pointer-events:none; opacity:0; background:radial-gradient(circle at 73% 42%,rgba(101,116,139,.24),transparent 34%),linear-gradient(125deg,#17191d 0%,#08090b 72%,#12151a 100%); transition:opacity .95s cubic-bezier(.22,1,.36,1); }
 .hero::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.12; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E"); mix-blend-mode:multiply; }
+.finish-white .hero::before { opacity:1; }
+.finish-white .nav { color:#f5f3ee; border-color:rgba(255,255,255,.1); background:rgba(8,9,11,.22); }
+.finish-white .brand-mark { border-color:rgba(255,255,255,.68); }
+.finish-white .nav-links,.finish-white .sound-toggle { color:#aeb3bc; }
+.finish-white .hero-copy > p:first-child { color:#aeb3bc; }
+.finish-white .hero h1 { color:#f4f3ef; }
+.finish-white .hero h1 span { color:#c8b291; }
+.finish-white .hero-description { color:#aeb2b8; }
+.finish-white .primary-cta { color:#15171b; background:#f4f2ed; box-shadow:0 12px 34px rgba(0,0,0,.24); }
+.finish-white .text-link { color:#c8b291; }
+.finish-white .hero-index,.finish-white .scroll-cue,.finish-white .interaction-hint { color:#a8adb5; }
+.finish-white .scroll-cue i { background:#737984; }
+.finish-white .color-selector,.finish-white .rotation-guide { border-color:rgba(255,255,255,.13); color:#c7cbd1; background:rgba(18,21,26,.62); box-shadow:0 14px 34px rgba(0,0,0,.22); }
+.finish-white .color-selector > span { color:#aeb3bb; }
 .hero-copy { position:relative; z-index:3; width:min(100%,820px); padding-left:clamp(0px,2vw,30px); transform:translateY(-5vh); text-align:left; }
 .hero-copy > p:first-child { margin: 0 0 clamp(20px,2vw,30px); font: 600 10px/1 Manrope,sans-serif; letter-spacing: .38em; color: #68645f; }
 .hero h1 { max-width:none; margin:0; font:400 clamp(74px,7.15vw,136px)/1 "Inter Tight",Arial,sans-serif; letter-spacing:-.028em; color:#1a1917; }

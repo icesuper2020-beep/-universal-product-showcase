@@ -12,10 +12,10 @@ const ARRIVAL_YAW = FRONT_YAW - .72
 
 function buildScreenTexture() {
   const canvas = document.createElement('canvas')
-  canvas.width = 1200
-  canvas.height = 720
+  canvas.width = 2048
+  canvas.height = 1280
   const context = canvas.getContext('2d')
-  const gradient = context.createRadialGradient(820, 330, 10, 700, 360, 620)
+  const gradient = context.createRadialGradient(1360, 550, 20, 1130, 640, 1040)
   gradient.addColorStop(0, '#5578ff')
   gradient.addColorStop(.24, '#284de4')
   gradient.addColorStop(.52, '#10256f')
@@ -23,28 +23,31 @@ function buildScreenTexture() {
   context.fillStyle = gradient
   context.fillRect(0, 0, canvas.width, canvas.height)
   context.textAlign = 'center'
-  context.fillStyle = 'rgba(210,225,255,.78)'
-  context.font = '600 18px Arial'
-  context.shadowColor = 'rgba(112,150,255,.8)'
-  context.shadowBlur = 18
-  context.fillText('A  E  R  O  N     O  N  E     E  X  P  E  R  I  E  N  C  E', 600, 276)
+  context.fillStyle = '#dce8ff'
+  context.font = '700 31px Arial'
+  context.shadowColor = 'rgba(112,150,255,.65)'
+  context.shadowBlur = 8
+  context.fillText('A E R O N   O N E   E X P E R I E N C E', 1024, 464)
   context.fillStyle = '#ffffff'
-  context.font = '500 82px Arial'
-  context.shadowBlur = 34
-  context.fillText('Go inside.', 600, 382)
+  context.font = '600 154px Arial'
+  context.shadowBlur = 14
+  context.fillText('Go inside.', 1024, 680)
   context.strokeStyle = 'rgba(210,229,255,.72)'
-  context.lineWidth = 2
+  context.lineWidth = 4
   context.beginPath()
-  context.roundRect(470, 430, 260, 58, 29)
+  context.roundRect(774, 752, 500, 106, 53)
   context.stroke()
-  context.font = '500 17px Arial'
-  context.fillStyle = '#dce9ff'
-  context.shadowBlur = 12
-  context.fillText('OPEN THE DISPLAY  →', 600, 466)
+  context.font = '700 29px Arial'
+  context.fillStyle = '#f3f7ff'
+  context.shadowBlur = 5
+  context.fillText('OPEN THE DISPLAY  →', 1024, 819)
   const texture = new THREE.CanvasTexture(canvas)
   texture.colorSpace = THREE.SRGBColorSpace
   texture.flipY = false
-  texture.anisotropy = 8
+  texture.anisotropy = 16
+  texture.magFilter = THREE.LinearFilter
+  texture.minFilter = THREE.LinearMipmapLinearFilter
+  texture.generateMipmaps = true
   return texture
 }
 

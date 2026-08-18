@@ -34,6 +34,7 @@ export default function App() {
   const [ready, setReady] = useState(false)
   const [leaving, setLeaving] = useState(false)
   const [displayFocused, setDisplayFocused] = useState(false)
+  const [displayOpen, setDisplayOpen] = useState(false)
   const pointer = useRef({ x: 0, y: 0 })
   const dragging = useRef(false)
   const webGLAvailable = useRef(supportsWebGL())
@@ -90,13 +91,30 @@ export default function App() {
         </div>
         <motion.div className="product-stage" initial={{ opacity: 0, scale: 0.86, x: 80 }} animate={ready ? { opacity: 1, scale: 1, x: 0 } : {}} transition={{ duration: 1.25, ease: [0.22, 1, 0.36, 1] }}>
           {webGLAvailable.current
-            ? <AeronScene pointer={pointer} dragging={dragging} onDisplayFocus={setDisplayFocused} />
+            ? <AeronScene pointer={pointer} dragging={dragging} onDisplayFocus={setDisplayFocused} onOpen={() => setDisplayOpen(true)} />
             : <ProductFallback />}
           <div className="interaction-hint"><span /> {displayFocused ? 'DISPLAY STABILIZED' : 'MOVE TO EXPLORE'}</div>
         </motion.div>
         <div className="hero-index">01 <span>/</span> 05</div>
         <a className="scroll-cue" href="#design"><span>SCROLL TO DISCOVER</span><i /></a>
       </section>
+
+      <AnimatePresence>
+        {displayOpen && (
+          <motion.div className="display-portal" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="display-portal-card" initial={{ opacity: 0, scale: .9, y: 28 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: .96 }} transition={{ type: 'spring', damping: 24, stiffness: 220 }}>
+              <button type="button" onClick={() => setDisplayOpen(false)} aria-label="Close experience">×</button>
+              <p>WELCOME INSIDE AERON ONE</p>
+              <h2>Everything you need.<br />Nothing you don’t.</h2>
+              <div className="portal-grid">
+                <article><span>01</span><h3>Featherlight form</h3><p>An ultra-thin precision chassis designed for movement.</p></article>
+                <article><span>02</span><h3>All-day power</h3><p>Performance that stays fast, silent and remarkably efficient.</p></article>
+                <article><span>03</span><h3>Immersive canvas</h3><p>A luminous display built for ideas, stories and detail.</p></article>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <section id="design" className="manifesto">
         <p>PRECISION, MADE VISIBLE</p>

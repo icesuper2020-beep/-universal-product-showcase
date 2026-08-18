@@ -64,9 +64,12 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   }, [model])
   const openQuaternion = useMemo(() => displayNode?.quaternion.clone() ?? new THREE.Quaternion(), [displayNode])
   const closedQuaternion = useMemo(() => {
-    const closed = openQuaternion.clone()
-    closed.multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), -1.18))
-    return closed
+    // This asset's hinge angle is authored on local Z (the node itself is
+    // rotated 180° on X). Preserve that authored orientation and close only
+    // the real hinge channel.
+    const closedEuler = new THREE.Euler().setFromQuaternion(openQuaternion, 'XYZ')
+    closedEuler.z = .025
+    return new THREE.Quaternion().setFromEuler(closedEuler)
   }, [openQuaternion])
 
   useEffect(() => {

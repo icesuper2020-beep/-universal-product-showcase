@@ -171,7 +171,7 @@ export default function App() {
         </div>
         <motion.div className="product-stage" initial={{ opacity: 0 }} animate={ready ? { opacity: 1 } : {}} transition={{ duration: .35 }}>
           {webGLAvailable.current
-            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={setDisplayFocused} onOpen={() => enterDisplay(1)} onSearch={() => { setSearchOpen(true); playAccent(420) }} onFeature={enterDisplay} />
+            ? ready && <AeronScene pointer={pointer} dragging={dragging} productColor={productColor} onDisplayFocus={setDisplayFocused} onOpen={() => enterDisplay(1)} onSearch={() => { setSearchOpen(true); playAccent(420) }} />
             : <ProductFallback />}
           <div className="color-selector" aria-label="Choose chassis finish">
             <span>FINISH</span>

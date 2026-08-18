@@ -44,7 +44,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const model = useMemo(() => scene.clone(true), [scene])
   const product = useRef()
   const introTime = useRef(0)
-  const target = useRef({ x: -.08, y: -.28 })
+  const target = useRef({ x: .28, y: -1.3 })
   const [displayFocused, setDisplayFocused] = useState(false)
   const screenTexture = useMemo(buildScreenTexture, [])
   const displayNode = useMemo(() => model.getObjectByName('laptop display'), [model])
@@ -91,17 +91,23 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   useFrame((_, delta) => {
     if (!product.current) return
     introTime.current = Math.min(4, introTime.current + delta)
-    const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 1.85)
-    const opening = THREE.MathUtils.smoothstep(introTime.current, .82, 3.15)
+    // A deliberate two-act reveal: closed product flies in first, then opens
+    // only after it has settled into its final hero position.
+    const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 2.35)
+    const opening = THREE.MathUtils.smoothstep(introTime.current, 2.45, 4)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    target.current.y = displayFocused ? -.28 : (deadZone ? -.28 : -.28 + pointer.current.x * Math.PI)
-    target.current.x = deadZone ? -.08 : -.08 - pointer.current.y * .16
+    const interactiveY = displayFocused ? -.28 : (deadZone ? -.28 : -.28 + pointer.current.x * Math.PI)
+    const interactiveX = deadZone ? -.08 : -.08 - pointer.current.y * .16
+    target.current.y = THREE.MathUtils.lerp(-1.3, interactiveY, arrival)
+    target.current.x = THREE.MathUtils.lerp(.28, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
-    product.current.position.y = THREE.MathUtils.lerp(1.45, -.18, arrival)
-    product.current.position.z = THREE.MathUtils.lerp(-5.5, 0, arrival)
-    const scale = THREE.MathUtils.lerp(modelFit.scale * .08, modelFit.scale, arrival)
+    product.current.rotation.z = THREE.MathUtils.lerp(product.current.rotation.z, THREE.MathUtils.lerp(.16, 0, arrival), damping)
+    product.current.position.x = THREE.MathUtils.lerp(1.45, 0, arrival)
+    product.current.position.y = THREE.MathUtils.lerp(2.15, -.18, arrival)
+    product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
+    const scale = THREE.MathUtils.lerp(modelFit.scale * .035, modelFit.scale, arrival)
     product.current.scale.setScalar(scale)
     if (displayNode) displayNode.quaternion.copy(closedQuaternion).slerp(openQuaternion, opening)
   })
@@ -113,7 +119,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
   return (
     <Float speed={.55} rotationIntensity={.018} floatIntensity={.08}>
-      <group ref={product} position={[0, 1.45, -5.5]} rotation={[-.08, -.28, 0]} scale={modelFit.scale * .08}>
+      <group ref={product} position={[1.45, 2.15, -8]} rotation={[.28, -1.3, .16]} scale={modelFit.scale * .035}>
         <primitive
           object={model}
           position={modelFit.offset.toArray()}

@@ -64,6 +64,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
   const screenTexture = useMemo(buildScreenTexture, [])
   // GLTFLoader sanitizes spaces in node names to underscores.
   const displayNode = useMemo(() => model.getObjectByName('laptop_display') || model.getObjectByName('laptop display'), [model])
+  const screenNode = useMemo(() => model.getObjectByName('wallpaper'), [model])
   const modelFit = useMemo(() => {
     // The downloaded GLB uses authoring-unit transforms, so a fixed scale makes
     // it appear tiny. Fit it to a predictable hero width and pivot around its
@@ -102,13 +103,13 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
         })
       }
     })
-    const wallpaper = model.getObjectByName('wallpaper')
+    const wallpaper = screenNode
     if (wallpaper?.material) {
       wallpaper.visible = true
       screenMaterial.current = new THREE.MeshBasicMaterial({ map: screenTexture, toneMapped: false, transparent: true, opacity: 0 })
       wallpaper.material = screenMaterial.current
     }
-  }, [model, screenTexture])
+  }, [model, screenNode, screenTexture])
 
   useEffect(() => {
     const finish = {
@@ -138,7 +139,7 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
     const opening = THREE.MathUtils.smoothstep(introTime.current, 2.45, 4)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
     const interactiveY = displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI)
-    const interactiveX = deadZone ? -.08 : -.08 - pointer.current.y * .16
+    const interactiveX = deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22)
     target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
     const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
@@ -170,13 +171,13 @@ function RealLaptop({ pointer, dragging, productColor, onDisplayFocus, onOpen, o
         <primitive
           object={model}
           position={modelFit.offset.toArray()}
-          onPointerEnter={() => focusDisplay(true)}
+          onPointerMove={(event) => focusDisplay(event.object === screenNode)}
           onPointerLeave={() => focusDisplay(false)}
           onClick={(event) => {
             event.stopPropagation()
             const hit = (event.object?.name || '').toLowerCase()
             if (/key|deck|powerbutton|^a$|^s$|^d$|^w$/.test(hit)) onSearch()
-            else if (event.object === model.getObjectByName('wallpaper')) onOpen()
+            else if (event.object === screenNode) onOpen()
           }}
         />
       </group>

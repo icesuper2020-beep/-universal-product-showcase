@@ -36,7 +36,7 @@ button { font: inherit; }
 .hero-copy { position:relative; z-index:3; width:min(100%,820px); padding-left:clamp(0px,2vw,30px); transform:translateY(-5vh); text-align:left; }
 .hero-copy > p:first-child { margin: 0 0 clamp(20px,2vw,30px); font: 600 10px/1 Manrope,sans-serif; letter-spacing: .38em; color: #68645f; }
 .hero h1 { max-width:none; margin:0; font:400 clamp(74px,7.15vw,136px)/1 "Inter Tight",Arial,sans-serif; letter-spacing:-.028em; color:#1a1917; }
-.hero h1 span { display:block; width:max-content; max-width:none; margin-top:.12em; color:#8a735b; font:400 1em/.9 "Inter Tight",Arial,sans-serif; letter-spacing:-.022em; white-space:nowrap; }
+.hero h1 span { display:block; width:max-content; max-width:none; margin-top:.12em; color:#8a735b; font:400 1.12em/.9 "Inter Tight",Arial,sans-serif; letter-spacing:-.028em; white-space:nowrap; }
 .hero-description { margin:clamp(30px,3vw,42px) 0 0; font:400 clamp(13px,1vw,16px)/1.72 Manrope,Arial,sans-serif; letter-spacing:-.012em; color:#66615b; }
 .hero-actions { margin-top: 34px; display: flex; align-items: center; gap: 28px; }
 .primary-cta { padding: 14px 21px; border:0; border-radius: 999px; background: #1a1917; color: #f6f1e9; font-size: 11px; cursor:pointer; transition: transform .25s ease,box-shadow .25s ease; }

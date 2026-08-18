@@ -192,7 +192,7 @@ export default function App() {
   }
 
   return (
-    <main>
+    <main className={productColor === 'silver' ? 'finish-white' : ''}>
       <AnimatePresence>{!ready && <LoadingExperience progress={progress} leaving={leaving} />}</AnimatePresence>
       <nav className="nav" aria-label="Primary navigation">
         <a className="brand" href="#experience" aria-label="Aeron home"><span className="brand-mark">A</span><span>AERON</span></a>

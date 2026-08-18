@@ -33,10 +33,10 @@ button { font: inherit; }
 
 .hero { position: relative; min-height: 100svh; padding: 78px clamp(24px,5vw,82px) 30px; display: grid; grid-template-columns: minmax(310px,.78fr) minmax(520px,1.3fr); align-items: center; background: radial-gradient(circle at 76% 43%,rgba(176,157,133,.24),transparent 35%), linear-gradient(120deg,#f7f4ee 0%,#ded8ce 100%); overflow: hidden; }
 .hero::after { content:""; position:absolute; inset:0; pointer-events:none; opacity:.12; background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.25'/%3E%3C/svg%3E"); mix-blend-mode:multiply; }
-.hero-copy { position: relative; z-index: 3; width:min(100%,720px); padding-left: clamp(0px,2vw,30px); transform:translateY(-1.5%); }
+.hero-copy { position: relative; z-index: 3; width:min(100%,720px); padding-left:clamp(0px,2vw,30px); transform:translateY(-1.5%); text-align:left; }
 .hero-copy > p:first-child { margin: 0 0 clamp(20px,2vw,30px); font: 600 10px/1 Manrope,sans-serif; letter-spacing: .38em; color: #68645f; }
-.hero h1 { max-width:6.9em; margin:0; font:400 clamp(68px,6.75vw,126px)/.82 "Inter Tight",Arial,sans-serif; letter-spacing:-.065em; color:#1a1917; }
-.hero h1 span { display:block; margin-top:.025em; color:#8a735b; }
+.hero h1 { max-width:6.6em; margin:0; font:500 clamp(68px,6.55vw,122px)/.78 "Inter Tight",Arial,sans-serif; letter-spacing:-.06em; color:#1a1917; }
+.hero h1 span { display:block; width:max-content; max-width:100%; margin-top:.12em; color:#8a735b; font-family:"Instrument Serif",Georgia,serif; font-size:1.08em; font-style:italic; font-weight:400; line-height:.72; letter-spacing:-.035em; }
 .hero-description { margin:clamp(30px,3vw,42px) 0 0; font:400 clamp(13px,1vw,16px)/1.72 Manrope,Arial,sans-serif; letter-spacing:-.012em; color:#66615b; }
 .hero-actions { margin-top: 34px; display: flex; align-items: center; gap: 28px; }
 .primary-cta { padding: 14px 21px; border:0; border-radius: 999px; background: #1a1917; color: #f6f1e9; font-size: 11px; cursor:pointer; transition: transform .25s ease,box-shadow .25s ease; }
@@ -137,6 +137,7 @@ button { font: inherit; }
   .hero { min-height: 100svh; grid-template-columns:1fr; grid-template-rows:auto minmax(390px,52vh); align-content:center; padding-top:110px; }
   .hero-copy { padding-left:0; text-align:center; }
   .hero h1 { max-width:none; margin-inline:auto; font-size:clamp(58px,11vw,92px); }
+  .hero h1 span { width:auto; }
   .hero-actions { justify-content:center; }
   .product-stage { height:52vh; min-height:390px; margin-top:-20px; }
   .hero-index { display:none; }

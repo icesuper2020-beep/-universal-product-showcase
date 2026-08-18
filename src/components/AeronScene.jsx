@@ -82,6 +82,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   const displayReleaseTimer = useRef(null)
   const introTime = useRef(0)
   const inspectionYaw = useRef(HERO_YAW)
+  const inspectionBlend = useRef(0)
   const target = useRef({ x: -.32, y: ARRIVAL_YAW })
   const [displayFocused, setDisplayFocused] = useState(false)
   const screenTexture = useMemo(() => buildScreenTexture(inspectionMode ? inspectionFeature : null, revealedWords), [inspectionMode, inspectionFeature, revealedWords])
@@ -174,6 +175,10 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   useEffect(() => () => screenTexture.dispose(), [screenTexture])
 
   useEffect(() => {
+    if (inspectionMode) inspectionYaw.current = HERO_YAW
+  }, [inspectionMode])
+
+  useEffect(() => {
     const finish = {
       midnight: new THREE.Color('#111827'),
       titanium: new THREE.Color('#747a83'),
@@ -199,25 +204,29 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
     // only after it has settled into its final hero position.
     const arrival = THREE.MathUtils.smoothstep(introTime.current, 0, 2.35)
     const opening = THREE.MathUtils.smoothstep(introTime.current, 2.45, 4)
+    inspectionBlend.current = THREE.MathUtils.damp(inspectionBlend.current, inspectionMode ? 1 : 0, .95, delta)
+    const inspectProgress = THREE.MathUtils.smootherstep(inspectionBlend.current, 0, 1)
     const deadZone = Math.abs(pointer.current.x) < .08 && Math.abs(pointer.current.y) < .08
-    if (inspectionMode && !displayFocused && !dragging.current) inspectionYaw.current += delta * .16
-    const interactiveY = inspectionMode ? (displayFocused ? HERO_YAW : inspectionYaw.current + pointer.current.x * .24) : (displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI))
-    const interactiveX = inspectionMode ? (displayFocused ? -.08 : THREE.MathUtils.clamp(-.12 - pointer.current.y * .16, -.3, .08)) : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
+    if (inspectionMode && inspectProgress > .96 && !displayFocused && !dragging.current) inspectionYaw.current += delta * .065
+    const inspectionTargetY = inspectProgress < .96 ? HERO_YAW : (displayFocused ? HERO_YAW : inspectionYaw.current + pointer.current.x * .16)
+    const interactiveY = inspectionMode ? inspectionTargetY : (displayFocused ? HERO_YAW : (deadZone ? HERO_YAW : HERO_YAW + pointer.current.x * Math.PI))
+    const interactiveX = inspectionMode ? (inspectProgress < .96 || displayFocused ? -.08 : THREE.MathUtils.clamp(-.1 - pointer.current.y * .12, -.24, .04)) : (displayFocused || deadZone ? -.08 : THREE.MathUtils.clamp(-.08 - pointer.current.y * .32, -.42, .22))
     target.current.y = THREE.MathUtils.lerp(ARRIVAL_YAW, interactiveY, arrival)
     target.current.x = THREE.MathUtils.lerp(-.32, interactiveX, arrival)
-    const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
+    const damping = 1 - Math.exp(-delta * (dragging.current ? 4 : (inspectionMode ? 1.15 : 2.6)))
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
     product.current.rotation.z = THREE.MathUtils.lerp(product.current.rotation.z, THREE.MathUtils.lerp(.16, 0, arrival), damping)
     const travel = 1 - arrival
     const waveX = Math.sin(introTime.current * 4.2) * .62 * travel
     const waveY = Math.sin(introTime.current * 7.1 + .8) * .22 * travel
-    const inspectX = inspectionMode ? -1.7 : 0
-    const inspectY = inspectionMode ? .62 : .16
-    product.current.position.x = THREE.MathUtils.lerp(product.current.position.x, THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX, 1 - Math.exp(-delta * 2.8))
-    product.current.position.y = THREE.MathUtils.lerp(product.current.position.y, THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY, 1 - Math.exp(-delta * 2.8))
+    const inspectX = THREE.MathUtils.lerp(0, -1.55, inspectProgress)
+    const inspectY = THREE.MathUtils.lerp(.16, .42, inspectProgress)
+    product.current.position.x = THREE.MathUtils.lerp(product.current.position.x, THREE.MathUtils.lerp(1.45, inspectX, arrival) + waveX, 1 - Math.exp(-delta * .95))
+    product.current.position.y = THREE.MathUtils.lerp(product.current.position.y, THREE.MathUtils.lerp(2.15, inspectY, arrival) + waveY, 1 - Math.exp(-delta * .95))
     product.current.position.z = THREE.MathUtils.lerp(-8, 0, arrival)
-    const scale = THREE.MathUtils.lerp(modelFit.scale * .035, modelFit.scale, arrival)
+    const settledScale = modelFit.scale * THREE.MathUtils.lerp(1, .84, inspectProgress)
+    const scale = THREE.MathUtils.lerp(modelFit.scale * .035, settledScale, arrival)
     product.current.scale.setScalar(scale)
     if (displayNode) displayNode.rotation.z = THREE.MathUtils.lerp(CLOSED_HINGE, openHinge, opening)
     if (screenMaterial.current) screenMaterial.current.opacity = THREE.MathUtils.smoothstep(opening, .18, .82)

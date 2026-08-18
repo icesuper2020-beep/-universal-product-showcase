@@ -8,6 +8,16 @@ const particles = Array.from({ length: 34 }, (_, index) => ({
   delay: (index % 9) * 0.06,
 }))
 
+const cluster = Array.from({ length: 54 }, (_, index) => {
+  const row = Math.floor(index / 9)
+  const column = index % 9
+  const leftEdge = 18 + row * 5
+  const rightEdge = 82 - row * 5
+  const isBridge = row === 3 && column > 1 && column < 7
+  const x = isBridge ? 27 + column * 6 : (column < 5 ? leftEdge + column * 1.3 : rightEdge - (8 - column) * 1.3)
+  return { id: index, x, y: 12 + row * 13, delay: index * 0.018 }
+})
+
 export default function LoadingExperience({ progress, leaving }) {
   return (
     <motion.div
@@ -24,10 +34,8 @@ export default function LoadingExperience({ progress, leaving }) {
           />
         ))}
       </div>
-      <div className="loader-mark" aria-hidden="true">
-        <span className="loader-mark-left" />
-        <span className="loader-mark-right" />
-        <span className="loader-mark-core" />
+      <div className="loader-cluster" aria-hidden="true">
+        {cluster.map((dot) => <i key={dot.id} style={{ left: `${dot.x}%`, top: `${dot.y}%`, animationDelay: `${dot.delay}s` }} />)}
       </div>
       <p className="loader-brand">AERON</p>
       <div className="loader-status">

@@ -4,6 +4,7 @@ import React, { Suspense, useEffect, useMemo, useRef, useState } from 'react'
 import * as THREE from 'three'
 
 const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
+const BRAND_PATTERN = /asus|tuflogo|tuf logo|outer logo|^tuf$/i
 
 function buildScreenTexture() {
   const canvas = document.createElement('canvas')
@@ -57,7 +58,7 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     const center = bounds.getCenter(new THREE.Vector3())
     const longestHorizontalSide = Math.max(size.x, size.z, .001)
     return {
-      scale: 5.9 / longestHorizontalSide,
+      scale: 4.35 / longestHorizontalSide,
       offset: center.multiplyScalar(-1),
     }
   }, [model])
@@ -70,12 +71,13 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
   useEffect(() => {
     model.traverse((object) => {
-      if (/asus|tuflogo|tuf logo|outer logo/i.test(object.name)) object.visible = false
+      const objectMaterials = Array.isArray(object.material) ? object.material : [object.material]
+      const isBrandElement = BRAND_PATTERN.test(object.name) || objectMaterials.some((material) => material && BRAND_PATTERN.test(material.name))
+      if (isBrandElement) object.visible = false
       if (object.isMesh) {
         object.castShadow = true
         object.receiveShadow = true
-        const materials = Array.isArray(object.material) ? object.material : [object.material]
-        materials.filter(Boolean).forEach((material) => {
+        objectMaterials.filter(Boolean).forEach((material) => {
           material.envMapIntensity = 1.1
           if (material.metalness !== undefined) material.metalness = Math.max(material.metalness, .35)
           if (material.roughness !== undefined) material.roughness = Math.min(material.roughness, .42)

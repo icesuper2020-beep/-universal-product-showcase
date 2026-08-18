@@ -47,6 +47,20 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
   const [displayFocused, setDisplayFocused] = useState(false)
   const screenTexture = useMemo(buildScreenTexture, [])
   const displayNode = useMemo(() => model.getObjectByName('laptop display'), [model])
+  const modelFit = useMemo(() => {
+    // The downloaded GLB uses authoring-unit transforms, so a fixed scale makes
+    // it appear tiny. Fit it to a predictable hero width and pivot around its
+    // visual centre so cursor rotation stays smooth and balanced.
+    model.updateMatrixWorld(true)
+    const bounds = new THREE.Box3().setFromObject(model)
+    const size = bounds.getSize(new THREE.Vector3())
+    const center = bounds.getCenter(new THREE.Vector3())
+    const longestHorizontalSide = Math.max(size.x, size.z, .001)
+    return {
+      scale: 5.9 / longestHorizontalSide,
+      offset: center.multiplyScalar(-1),
+    }
+  }, [model])
   const openQuaternion = useMemo(() => displayNode?.quaternion.clone() ?? new THREE.Quaternion(), [displayNode])
   const closedQuaternion = useMemo(() => {
     const closed = openQuaternion.clone()
@@ -83,9 +97,9 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
     const damping = 1 - Math.exp(-delta * (dragging.current ? 5.2 : 2.6))
     product.current.rotation.y = THREE.MathUtils.lerp(product.current.rotation.y, target.current.y, damping * arrival)
     product.current.rotation.x = THREE.MathUtils.lerp(product.current.rotation.x, target.current.x, damping)
-    product.current.position.y = THREE.MathUtils.lerp(1.75, -.62, arrival)
+    product.current.position.y = THREE.MathUtils.lerp(1.45, -.18, arrival)
     product.current.position.z = THREE.MathUtils.lerp(-5.5, 0, arrival)
-    const scale = THREE.MathUtils.lerp(.12, .56, arrival)
+    const scale = THREE.MathUtils.lerp(modelFit.scale * .08, modelFit.scale, arrival)
     product.current.scale.setScalar(scale)
     if (displayNode) displayNode.quaternion.copy(closedQuaternion).slerp(openQuaternion, opening)
   })
@@ -97,9 +111,10 @@ function RealLaptop({ pointer, dragging, onDisplayFocus, onOpen }) {
 
   return (
     <Float speed={.55} rotationIntensity={.018} floatIntensity={.08}>
-      <group ref={product} position={[0, 1.75, -5.5]} rotation={[-.08, -.28, 0]} scale={.12}>
+      <group ref={product} position={[0, 1.45, -5.5]} rotation={[-.08, -.28, 0]} scale={modelFit.scale * .08}>
         <primitive
           object={model}
+          position={modelFit.offset.toArray()}
           onPointerEnter={() => focusDisplay(true)}
           onPointerLeave={() => focusDisplay(false)}
           onClick={(event) => { event.stopPropagation(); onOpen() }}
@@ -119,7 +134,7 @@ export default function AeronScene({ pointer, dragging, onDisplayFocus, onOpen }
         <spotLight position={[2, 6, -4]} intensity={11} angle={.5} penumbra={1} color="#7aa3ff" />
         <pointLight position={[0, -1, 5]} intensity={2.6} color="#5b9eff" />
         <RealLaptop pointer={pointer} dragging={dragging} onDisplayFocus={onDisplayFocus} onOpen={onOpen} />
-        <ContactShadows position={[0, -.68, 0]} opacity={.28} scale={9} blur={3.4} far={4} />
+        <ContactShadows position={[0, -1.28, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>
     </Canvas>
   )

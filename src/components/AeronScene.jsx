@@ -222,10 +222,10 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
 
   useEffect(() => {
     const finish = {
-      midnight: { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveSurface: true },
-      titanium: { color: '#747b85', metalness: .72, roughness: .25, env: 2.15, preserveSurface: false },
-      silver: { color: '#eef1f4', metalness: .58, roughness: .3, env: 2.55, preserveSurface: false },
-    }[productColor] || { color: '#111722', metalness: .76, roughness: .24, env: 1.75, preserveSurface: true }
+      midnight: { color: '#111722', metalness: .76, roughness: .24, env: 1.75, emissive: '#05070b', emissiveIntensity: .03, preserveSurface: true },
+      titanium: { color: '#747b85', metalness: .58, roughness: .28, env: 2.15, emissive: '#58606a', emissiveIntensity: .16, preserveSurface: false },
+      silver: { color: '#eef1f4', metalness: .38, roughness: .32, env: 2.55, emissive: '#e4e8ed', emissiveIntensity: .34, preserveSurface: false },
+    }[productColor] || { color: '#111722', metalness: .76, roughness: .24, env: 1.75, emissive: '#05070b', emissiveIntensity: .03, preserveSurface: true }
     const finishColor = new THREE.Color(finish.color)
     model.traverse((object) => {
       if (!object.isMesh || object.name === 'wallpaper') return
@@ -254,6 +254,8 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
             metalness: material.metalness,
             roughness: material.roughness,
             envMapIntensity: material.envMapIntensity,
+            emissive: material.emissive?.clone?.() || null,
+            emissiveIntensity: material.emissiveIntensity,
           }
         }
         const base = material.userData.aeronFinishBase
@@ -267,6 +269,8 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
           if (base.metalness !== undefined) material.metalness = base.metalness
           if (base.roughness !== undefined) material.roughness = base.roughness
           if (base.envMapIntensity !== undefined) material.envMapIntensity = base.envMapIntensity
+          if (material.emissive && base.emissive) material.emissive.copy(base.emissive)
+          if (base.emissiveIntensity !== undefined) material.emissiveIntensity = base.emissiveIntensity
           material.needsUpdate = true
           return
         }
@@ -280,6 +284,13 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
         if (material.metalness !== undefined) material.metalness = finish.metalness
         if (material.roughness !== undefined) material.roughness = finish.roughness
         material.envMapIntensity = finish.env
+        // Some faces in the source model have inconsistent authored normals.
+        // A subtle finish-coloured emissive lift keeps the palm rest and lower
+        // chassis true to the selected finish without washing out the keys.
+        if (material.emissive) {
+          material.emissive.set(finish.emissive)
+          material.emissiveIntensity = finish.emissiveIntensity
+        }
         material.needsUpdate = true
       })
     })

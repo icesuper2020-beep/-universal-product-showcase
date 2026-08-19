@@ -458,6 +458,11 @@ export default function AeronScene({ pointer, dragging, productColor, inspection
           distance={12}
           decay={1.7}
         />
+        <directionalLight
+          position={[0, 7.5, 7]}
+          intensity={inspectionMode ? (productColor === 'silver' ? 8.5 : productColor === 'titanium' ? 4.2 : 1.25) : 0}
+          color={productColor === 'silver' ? '#ffffff' : '#eee3d7'}
+        />
         <RealLaptop pointer={pointer} dragging={dragging} productColor={productColor} inspectionMode={inspectionMode} inspectionFeature={inspectionFeature} revealedWords={revealedWords} compactDevice={compactDevice} onInspect={onInspect} onDisplayFocus={onDisplayFocus} onOpen={onOpen} onSearch={onSearch} />
         <ContactShadows position={[0, -1, 0]} opacity={.26} scale={9} blur={3.6} far={4} />
       </Suspense>

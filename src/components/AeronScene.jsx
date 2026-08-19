@@ -7,7 +7,11 @@ const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
 const BRAND_OBJECT_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 const BRAND_MATERIAL_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo/i
 const CHASSIS_PATTERN = /(^|\s)(mold(?:\s|_|\.|$)|deck2?(?:\s|_|\.|$)|laptop[ _]display|display[ _]sqr)/i
-const CHASSIS_EXCLUDE_PATTERN = /wallpaper|keys?|wasd|backlight|keylight|led|power|logo|(^|\s)red($|\s)/i
+// Keep only genuinely non-chassis details out of the finish pass. The source
+// GLB calls one of the large lower-shell material slots `red`, even though it
+// is part of the palm-rest/body, so excluding that name made the inspection
+// deck fall back to black.
+const CHASSIS_EXCLUDE_PATTERN = /wallpaper|keys?|wasd|backlight|keylight|led|power|logo/i
 const CLOSED_HINGE = Math.PI - .018
 const FRONT_YAW = -Math.PI / 2
 const HERO_YAW = FRONT_YAW - .3
@@ -93,6 +97,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   const revealLight = useRef()
   const screenMaterial = useRef()
   const keyboardGlowMaterials = useRef([])
+  const inspectionChassisMaterials = useRef([])
   const displayFocusRef = useRef(false)
   const displayReleaseTimer = useRef(null)
   const poseResetTimer = useRef(null)
@@ -221,6 +226,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   }, [inspectionMode])
 
   useEffect(() => {
+    inspectionChassisMaterials.current = []
     const finish = {
       midnight: { color: '#111722', metalness: .76, roughness: .24, env: 1.75, emissive: '#05070b', emissiveIntensity: .03, preserveSurface: true },
       titanium: { color: '#747b85', metalness: .58, roughness: .28, env: 2.15, emissive: '#58606a', emissiveIntensity: .16, preserveSurface: false },
@@ -247,6 +253,10 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
         // Decide finish eligibility per material instead of excluding the
         // complete mesh because one of its slots is a port/LED material.
         const isChassis = (isChassisObject || isDeckBody) && !CHASSIS_EXCLUDE_PATTERN.test(material.name || '')
+        // Retain every isolated chassis material, not only the display frame.
+        // Inspection updates its canvas texture every few frames; locking this
+        // complete set prevents any lower-shell slot from reverting to black.
+        if (isChassis) inspectionChassisMaterials.current.push(material)
         if (!material.userData.aeronFinishBase) {
           material.userData.aeronFinishBase = {
             color: material.color.clone(),
@@ -359,6 +369,25 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
       if ('emissiveIntensity' in material) material.emissiveIntensity = keyboardReveal * keyboardBreath * (isLightLayer ? 2.1 : .42)
       material.opacity = isLightLayer ? baseOpacity * keyboardReveal * keyboardBreath : baseOpacity
     })
+    // The source GLB refreshes parts of its shared deck material when the
+    // display texture changes. Keep the selected chassis finish locked while
+    // the product is in the front-facing inspection experience.
+    if (inspectionMode) {
+      const lockedFinish = {
+        midnight: { color: '#111722', emissive: '#05070b', intensity: .03, metalness: .76, roughness: .24 },
+        titanium: { color: '#747b85', emissive: '#58606a', intensity: .28, metalness: .58, roughness: .28 },
+        silver: { color: '#eef1f4', emissive: '#e4e8ed', intensity: .62, metalness: .38, roughness: .32 },
+      }[productColor]
+      inspectionChassisMaterials.current.forEach((material) => {
+        material.color?.set(lockedFinish.color)
+        if (material.emissive) {
+          material.emissive.set(lockedFinish.emissive)
+          material.emissiveIntensity = lockedFinish.intensity
+        }
+        material.metalness = lockedFinish.metalness
+        material.roughness = lockedFinish.roughness
+      })
+    }
     if (revealLight.current) revealLight.current.intensity = Math.sin(opening * Math.PI) * 3.2 + opening * .55
   })
 

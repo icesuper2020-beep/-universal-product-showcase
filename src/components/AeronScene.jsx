@@ -369,23 +369,52 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
       if ('emissiveIntensity' in material) material.emissiveIntensity = keyboardReveal * keyboardBreath * (isLightLayer ? 2.1 : .42)
       material.opacity = isLightLayer ? baseOpacity * keyboardReveal * keyboardBreath : baseOpacity
     })
-    // The source GLB refreshes parts of its shared deck material when the
-    // display texture changes. Keep the selected chassis finish locked while
-    // the product is in the front-facing inspection experience.
+    // The source GLB can replace material instances while the animated screen
+    // texture is being rebuilt. Re-read the CURRENT mesh materials in
+    // inspection mode instead of relying only on references captured earlier.
+    // This keeps the lower deck, palm rest, hinge and display shell identical
+    // to the finish that was selected on the hero.
     if (inspectionMode) {
       const lockedFinish = {
         midnight: { color: '#111722', emissive: '#05070b', intensity: .03, metalness: .76, roughness: .24 },
-        titanium: { color: '#747b85', emissive: '#58606a', intensity: .28, metalness: .58, roughness: .28 },
-        silver: { color: '#eef1f4', emissive: '#e4e8ed', intensity: .62, metalness: .38, roughness: .32 },
+        titanium: { color: '#747b85', emissive: '#58606a', intensity: .34, metalness: .58, roughness: .28 },
+        silver: { color: '#f1f3f5', emissive: '#e8ebef', intensity: .78, metalness: .38, roughness: .32 },
       }[productColor]
-      inspectionChassisMaterials.current.forEach((material) => {
-        material.color?.set(lockedFinish.color)
-        if (material.emissive) {
-          material.emissive.set(lockedFinish.emissive)
-          material.emissiveIntensity = lockedFinish.intensity
+      model.traverse((object) => {
+        if (!object.isMesh || object.name === 'wallpaper') return
+        const hierarchy = []
+        let node = object
+        while (node && node !== model) {
+          hierarchy.push(node.name || '')
+          node = node.parent
         }
-        material.metalness = lockedFinish.metalness
-        material.roughness = lockedFinish.roughness
+        const objectPath = hierarchy.join(' ')
+        const isDeckShell = hierarchy.some((name) => /^deck(?:_\d+)?$/i.test(name))
+        const isDisplayShell = /laptop[ _]display/i.test(objectPath)
+        if ((!isDeckShell && !isDisplayShell) || CHASSIS_EXCLUDE_PATTERN.test(objectPath)) return
+        const currentMaterials = Array.isArray(object.material) ? object.material : [object.material]
+        currentMaterials.filter(Boolean).forEach((material) => {
+          if (!material.color || BRAND_MATERIAL_PATTERN.test(material.name) || CHASSIS_EXCLUDE_PATTERN.test(material.name || '')) return
+          material.color.set(lockedFinish.color)
+          // Lighter finishes must not inherit the nearly-black authored maps.
+          if (productColor !== 'midnight') {
+            const hadAuthoredMaps = Boolean(material.map || material.normalMap || material.roughnessMap || material.metalnessMap)
+            material.map = null
+            material.normalMap = null
+            material.roughnessMap = null
+            material.metalnessMap = null
+            material.vertexColors = false
+            if (hadAuthoredMaps) material.needsUpdate = true
+          }
+          if (material.emissive) {
+            material.emissive.set(lockedFinish.emissive)
+            material.emissiveIntensity = lockedFinish.intensity
+          }
+          material.opacity = 1
+          material.transparent = false
+          material.metalness = lockedFinish.metalness
+          material.roughness = lockedFinish.roughness
+        })
       })
     }
     if (revealLight.current) revealLight.current.intensity = Math.sin(opening * Math.PI) * 3.2 + opening * .55

@@ -238,12 +238,15 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
       const materials = Array.isArray(object.material) ? object.material : [object.material]
       const objectPath = hierarchy.join(' ')
       const isChassisObject = CHASSIS_PATTERN.test(objectPath) && !CHASSIS_EXCLUDE_PATTERN.test(objectPath)
+      // GLTFLoader splits the authored DECK node into Cube/Cube_1/etc. meshes.
+      // Treat every non-key material under that parent as the palm-rest shell.
+      const isDeckBody = hierarchy.some((name) => /^deck(?:_\d+)?$/i.test(name))
       materials.filter(Boolean).forEach((material) => {
         if (!material.color || BRAND_MATERIAL_PATTERN.test(material.name)) return
         // One deck mesh contains separate body, port and accent materials.
         // Decide finish eligibility per material instead of excluding the
         // complete mesh because one of its slots is a port/LED material.
-        const isChassis = isChassisObject && !CHASSIS_EXCLUDE_PATTERN.test(material.name || '')
+        const isChassis = (isChassisObject || isDeckBody) && !CHASSIS_EXCLUDE_PATTERN.test(material.name || '')
         if (!material.userData.aeronFinishBase) {
           material.userData.aeronFinishBase = {
             color: material.color.clone(),
@@ -289,7 +292,9 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
         // chassis true to the selected finish without washing out the keys.
         if (material.emissive) {
           material.emissive.set(finish.emissive)
-          material.emissiveIntensity = finish.emissiveIntensity
+          material.emissiveIntensity = inspectionMode && isDeckBody && productColor !== 'midnight'
+            ? Math.max(finish.emissiveIntensity, productColor === 'silver' ? .62 : .28)
+            : finish.emissiveIntensity
         }
         material.needsUpdate = true
       })

@@ -7,7 +7,7 @@ const MODEL_URL = '/laptop-3d-model-asus-tuf-dash-f15-2022/source/LAPTOP.glb'
 const BRAND_OBJECT_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo|^tuf$/i
 const BRAND_MATERIAL_PATTERN = /asus|tuf[_ ]?logo|outer[_ ]logo/i
 const CHASSIS_PATTERN = /(^|\s)(mold(?:\s|_|\.|$)|deck2?(?:\s|_|\.|$)|laptop[ _]display|display[ _]sqr)/i
-const CHASSIS_EXCLUDE_PATTERN = /wallpaper|keys?|wasd|backlight|keylight|led|power|logo|pendrive/i
+const CHASSIS_EXCLUDE_PATTERN = /wallpaper|keys?|wasd|backlight|keylight|led|power|logo|pendrive|(^|\s)red($|\s)/i
 const CLOSED_HINGE = Math.PI - .018
 const FRONT_YAW = -Math.PI / 2
 const HERO_YAW = FRONT_YAW - .3
@@ -236,11 +236,14 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
         node = node.parent
       }
       const materials = Array.isArray(object.material) ? object.material : [object.material]
-      const materialNames = materials.filter(Boolean).map((material) => material.name || '').join(' ')
-      const surfaceName = `${hierarchy.join(' ')} ${materialNames}`
-      const isChassis = CHASSIS_PATTERN.test(surfaceName) && !CHASSIS_EXCLUDE_PATTERN.test(surfaceName)
+      const objectPath = hierarchy.join(' ')
+      const isChassisObject = CHASSIS_PATTERN.test(objectPath) && !CHASSIS_EXCLUDE_PATTERN.test(objectPath)
       materials.filter(Boolean).forEach((material) => {
         if (!material.color || BRAND_MATERIAL_PATTERN.test(material.name)) return
+        // One deck mesh contains separate body, port and accent materials.
+        // Decide finish eligibility per material instead of excluding the
+        // complete mesh because one of its slots is a port/LED material.
+        const isChassis = isChassisObject && !CHASSIS_EXCLUDE_PATTERN.test(material.name || '')
         if (!material.userData.aeronFinishBase) {
           material.userData.aeronFinishBase = {
             color: material.color.clone(),

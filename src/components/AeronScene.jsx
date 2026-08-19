@@ -98,6 +98,7 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   const screenMaterial = useRef()
   const keyboardGlowMaterials = useRef([])
   const inspectionChassisMaterials = useRef([])
+  const inspectionMaterialOverrides = useRef([])
   const displayFocusRef = useRef(false)
   const displayReleaseTimer = useRef(null)
   const poseResetTimer = useRef(null)
@@ -312,6 +313,74 @@ function RealLaptop({ pointer, dragging, productColor, inspectionMode, inspectio
   // Reapply the selected finish after entering/leaving inspection because the
   // live display texture rebuild also refreshes materials in the source GLB.
   }, [model, productColor, inspectionMode])
+
+  // The authoring file uses a near-black multi-material deck. Mutating those
+  // imported materials is not reliable in inspection mode because several
+  // primitives share the same authored shader state. While inspecting, swap
+  // only the aluminium shell primitives to clean PBR materials. The keyboard,
+  // screen, LEDs and logos keep their original materials and the hero is
+  // restored byte-for-byte when inspection closes.
+  useLayoutEffect(() => {
+    inspectionMaterialOverrides.current.forEach(({ object, original, replacements }) => {
+      object.material = original
+      replacements.forEach((material) => material.dispose())
+    })
+    inspectionMaterialOverrides.current = []
+    if (!inspectionMode) return undefined
+
+    const finish = {
+      midnight: { color: '#111722', emissive: '#05070b', intensity: .025, metalness: .76, roughness: .24 },
+      titanium: { color: '#747b85', emissive: '#4c535c', intensity: .18, metalness: .58, roughness: .28 },
+      silver: { color: '#f4f5f6', emissive: '#dfe3e7', intensity: .46, metalness: .42, roughness: .3 },
+    }[productColor]
+
+    model.traverse((object) => {
+      if (!object.isMesh || !object.material || object.name === 'wallpaper') return
+      const hierarchy = []
+      let node = object
+      while (node && node !== model) {
+        hierarchy.push(node.name || '')
+        node = node.parent
+      }
+      const objectPath = hierarchy.join(' ')
+      const isDeckShell = hierarchy.some((name) => /^deck(?:_\d+)?$/i.test(name))
+      const isDisplayShell = /laptop[ _]display/i.test(objectPath)
+      const isKeyboardOrDetail = /keys?[ _]phy|wasd|backlight|keylight|led|power|logo|wallpaper/i.test(objectPath)
+      if ((!isDeckShell && !isDisplayShell) || isKeyboardOrDetail) return
+
+      const original = object.material
+      const sourceMaterials = Array.isArray(original) ? original : [original]
+      const replacements = []
+      const nextMaterials = sourceMaterials.map((source) => {
+        if (!source || CHASSIS_EXCLUDE_PATTERN.test(source.name || '') || BRAND_MATERIAL_PATTERN.test(source.name || '')) return source
+        const material = new THREE.MeshStandardMaterial({
+          name: `${source.name || 'chassis'}__aeron_${productColor}`,
+          color: finish.color,
+          emissive: finish.emissive,
+          emissiveIntensity: finish.intensity,
+          metalness: finish.metalness,
+          roughness: finish.roughness,
+          envMapIntensity: productColor === 'silver' ? 2.8 : productColor === 'titanium' ? 2.2 : 1.75,
+          side: THREE.DoubleSide,
+        })
+        material.depthWrite = true
+        material.depthTest = true
+        replacements.push(material)
+        return material
+      })
+      if (!replacements.length) return
+      object.material = Array.isArray(original) ? nextMaterials : nextMaterials[0]
+      inspectionMaterialOverrides.current.push({ object, original, replacements })
+    })
+
+    return () => {
+      inspectionMaterialOverrides.current.forEach(({ object, original, replacements }) => {
+        object.material = original
+        replacements.forEach((material) => material.dispose())
+      })
+      inspectionMaterialOverrides.current = []
+    }
+  }, [model, inspectionMode, productColor])
 
   useFrame((_, delta) => {
     if (!product.current) return
